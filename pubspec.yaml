@@ -63,9 +63,9 @@ flutter:
     - assets/fonts/
 
   fonts:
-    - family: KFGQPC Uthman Taha
+    - family: KFGQPC Uthmanic Script HAFS
       fonts:
-        - asset: assets/fonts/KFGQPC-Uthman-Taha-Naskh.ttf
+        - asset: assets/fonts/KFGQPC-Uthmanic-Script-HAFS.otf
     - family: Amiri
       fonts:
         - asset: assets/fonts/Amiri-Regular.ttf

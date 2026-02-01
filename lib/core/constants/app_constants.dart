@@ -13,7 +13,7 @@ const int searchMinLength = 2;
 const int fontSizeMin = 24;
 const int fontSizeMax = 60;
 const int defaultFontSize = 32;
-const String defaultFont = 'KFGQPC Uthman Taha';
+const String defaultFont = 'KFGQPC Uthmanic Script HAFS';
 const String defaultLineHeight = 'normal';
 const String defaultTheme = 'system';
 
