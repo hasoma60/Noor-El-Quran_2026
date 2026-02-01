@@ -1,0 +1,8 @@
+{
+  "total_chapters": 114,
+  "total_verses": 6236,
+  "total_juz": 30,
+  "total_hizb": 60,
+  "total_pages": 604,
+  "note": "This file provides basic metadata for offline-first startup. Full chapter data is fetched from API."
+}
