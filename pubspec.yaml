@@ -1,7 +1,7 @@
-name: noor_alquran
-description: "Noor Al-Quran - A comprehensive Quran study application"
+name: noor_alquran_2026
+description: "Noor Al-Quran 2026 - A comprehensive Quran study application"
 publish_to: 'none'
-version: 3.0.0+1
+version: 4.0.0+1
 
 environment:
   sdk: ^3.6.2
@@ -30,6 +30,7 @@ dependencies:
   # Audio
   just_audio: ^0.9.43
   audio_service: ^0.18.17
+  flutter_cache_manager: ^3.3.1
 
   # UI
   flutter_html: ^3.0.0-beta.2
@@ -62,6 +63,9 @@ flutter:
     - assets/fonts/
 
   fonts:
+    - family: KFGQPC Uthman Taha
+      fonts:
+        - asset: assets/fonts/KFGQPC-Uthman-Taha-Naskh.ttf
     - family: Amiri
       fonts:
         - asset: assets/fonts/Amiri-Regular.ttf

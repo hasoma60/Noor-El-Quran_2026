@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:noor_alquran/core/utils/arabic_utils.dart';
-import 'package:noor_alquran/core/utils/html_sanitizer.dart';
+import 'package:noor_alquran_2026/core/utils/arabic_utils.dart';
+import 'package:noor_alquran_2026/core/utils/html_sanitizer.dart';
 
 void main() {
   group('Arabic Utils', () {
