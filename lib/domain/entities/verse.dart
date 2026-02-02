@@ -4,6 +4,7 @@ class Verse extends Equatable {
   final int id;
   final String verseKey;
   final String textUthmani;
+  final String? textUthmaniTajweed;
   final List<Translation>? translations;
   final List<Word>? words;
 
@@ -11,6 +12,7 @@ class Verse extends Equatable {
     required this.id,
     required this.verseKey,
     required this.textUthmani,
+    this.textUthmaniTajweed,
     this.translations,
     this.words,
   });

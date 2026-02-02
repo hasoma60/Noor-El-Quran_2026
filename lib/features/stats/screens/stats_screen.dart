@@ -79,7 +79,7 @@ class StatsScreen extends ConsumerWidget {
             crossAxisSpacing: 12,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 1.5,
+            childAspectRatio: 1.2,
             children: [
               _StatCard(
                 icon: Icons.local_fire_department,
@@ -242,7 +242,7 @@ class _StatCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

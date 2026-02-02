@@ -48,6 +48,17 @@ class TajweedColors {
     'ikhfa_meem': ikhfaMeemSaakin,
     'idgham_meem': idghamMeemSaakin,
     'silent': silent,
+    // Quran.com API CSS class name mappings
+    'ham_wasl': silent,
+    'madda_normal': ghunnah,
+    'madda_permissible': ghunnah,
+    'madda_obligatory': ghunnah,
+    'lpieces_sign': silent,
+    'iqlab': ikhfaMeemSaakin,
+    'ikhfa_shafawi': ikhfaMeemSaakin,
+    'idgham_shafawi': idghamMeemSaakin,
+    'idgham_ghunnah': idgham,
+    'idgham_wo_ghunnah': idgham,
   };
 
   static const Map<String, String> arabicLabels = {

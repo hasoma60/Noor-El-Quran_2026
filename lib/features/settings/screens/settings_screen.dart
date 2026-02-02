@@ -184,6 +184,22 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: notifier.setShowTranslation,
           ),
 
+          // Word by word
+          SwitchListTile(
+            title: const Text('عرض كلمة بكلمة'),
+            subtitle: const Text('ترجمة كل كلمة على حدة'),
+            value: settings.showWordByWord,
+            onChanged: notifier.setShowWordByWord,
+          ),
+
+          // Tajweed colors
+          SwitchListTile(
+            title: const Text('ألوان التجويد'),
+            subtitle: const Text('تلوين أحكام التجويد في النص القرآني'),
+            value: settings.showTajweed,
+            onChanged: notifier.setShowTajweed,
+          ),
+
           const Divider(height: 32),
 
           // Reciter selection

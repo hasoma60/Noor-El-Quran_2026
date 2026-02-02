@@ -40,9 +40,10 @@ class QuranRemoteDataSource {
     int chapterId, {
     List<int> translationIds = const [inlineTranslationId],
     bool withWords = false,
+    bool withTajweed = false,
   }) async {
     final translations = translationIds.join(',');
-    final cacheKey = 'verses_${chapterId}_${translations}_$withWords';
+    final cacheKey = 'verses_${chapterId}_${translations}_${withWords}_$withTajweed';
     final cached = await _cache.get<List<dynamic>>(cacheKey);
     if (cached != null) {
       return cached
@@ -51,6 +52,7 @@ class QuranRemoteDataSource {
     }
 
     try {
+      final fields = withTajweed ? 'text_uthmani,text_uthmani_tajweed' : 'text_uthmani';
       final response = await _client.get(
         '/verses/by_chapter/$chapterId',
         queryParameters: {
@@ -58,7 +60,7 @@ class QuranRemoteDataSource {
           'words': withWords,
           if (withWords) 'word_fields': 'text_uthmani,translation',
           'translations': translations,
-          'fields': 'text_uthmani',
+          'fields': fields,
           'per_page': versesPerPage,
         },
       );

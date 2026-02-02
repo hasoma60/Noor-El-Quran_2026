@@ -23,6 +23,8 @@ class SettingsState {
   final NightModeSchedule nightModeSchedule;
   final int selectedReciterId;
   final bool reducedMotion;
+  final bool showWordByWord;
+  final bool showTajweed;
 
   const SettingsState({
     this.fontSize = 28,
@@ -35,6 +37,8 @@ class SettingsState {
     this.nightModeSchedule = const NightModeSchedule(),
     this.selectedReciterId = 7,
     this.reducedMotion = false,
+    this.showWordByWord = false,
+    this.showTajweed = false,
   });
 
   SettingsState copyWith({
@@ -48,6 +52,8 @@ class SettingsState {
     NightModeSchedule? nightModeSchedule,
     int? selectedReciterId,
     bool? reducedMotion,
+    bool? showWordByWord,
+    bool? showTajweed,
   }) {
     return SettingsState(
       fontSize: fontSize ?? this.fontSize,
@@ -60,6 +66,8 @@ class SettingsState {
       nightModeSchedule: nightModeSchedule ?? this.nightModeSchedule,
       selectedReciterId: selectedReciterId ?? this.selectedReciterId,
       reducedMotion: reducedMotion ?? this.reducedMotion,
+      showWordByWord: showWordByWord ?? this.showWordByWord,
+      showTajweed: showTajweed ?? this.showTajweed,
     );
   }
 
@@ -97,6 +105,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
           nightModeSchedule: _dataSource.getNightModeSchedule(),
           selectedReciterId: _dataSource.getSelectedReciterId(),
           reducedMotion: _dataSource.getReducedMotion(),
+          showWordByWord: _dataSource.getShowWordByWord(),
+          showTajweed: _dataSource.getShowTajweed(),
         ));
 
   void setFontSize(int size) {
@@ -147,6 +157,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   void setReducedMotion(bool val) {
     state = state.copyWith(reducedMotion: val);
     _dataSource.setReducedMotion(val);
+  }
+
+  void setShowWordByWord(bool val) {
+    state = state.copyWith(showWordByWord: val);
+    _dataSource.setShowWordByWord(val);
+  }
+
+  void setShowTajweed(bool val) {
+    state = state.copyWith(showTajweed: val);
+    _dataSource.setShowTajweed(val);
   }
 }
 

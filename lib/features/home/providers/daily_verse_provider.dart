@@ -26,6 +26,7 @@ final dailyVerseProvider = FutureProvider<DailyVerseData?>((ref) async {
         final verseNum = verseIndex - accumulated + 1;
         final verseKey = '${ch.id}:$verseNum';
         final verse = await repository.getVerseByKey(verseKey);
+        if (verse == null) return null;
         return DailyVerseData(verse: verse, chapter: ch);
       }
       accumulated += ch.versesCount;

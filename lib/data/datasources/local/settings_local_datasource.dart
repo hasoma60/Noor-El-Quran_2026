@@ -67,4 +67,12 @@ class SettingsLocalDataSource {
   // Reduced motion
   bool getReducedMotion() => _prefs.getBool('reducedMotion') ?? false;
   Future<void> setReducedMotion(bool val) => _prefs.setBool('reducedMotion', val);
+
+  // Word by word
+  bool getShowWordByWord() => _prefs.getBool('showWordByWord') ?? false;
+  Future<void> setShowWordByWord(bool val) => _prefs.setBool('showWordByWord', val);
+
+  // Tajweed colors
+  bool getShowTajweed() => _prefs.getBool('showTajweed') ?? false;
+  Future<void> setShowTajweed(bool val) => _prefs.setBool('showTajweed', val);
 }

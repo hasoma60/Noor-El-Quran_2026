@@ -4,49 +4,66 @@ import '../../domain/entities/verse.dart';
 import '../../domain/entities/search_result.dart';
 import '../datasources/remote/quran_remote_datasource.dart';
 import '../datasources/remote/alquran_cloud_datasource.dart';
+import '../datasources/local/quran_local_datasource.dart';
 
-/// Repository that tries the primary API (Quran Foundation) first,
-/// then falls back to AlQuran Cloud on failure (auth errors, network issues).
+/// Repository that tries primary API → fallback API → local bundle.
 class QuranRepository {
   final QuranRemoteDataSource _primary;
   final AlQuranCloudDataSource _fallback;
+  final QuranLocalDataSource _local;
 
-  QuranRepository(this._primary, this._fallback);
+  QuranRepository(this._primary, this._fallback, this._local);
 
   Future<List<Chapter>> getChapters() async {
     try {
       return await _primary.fetchChapters();
     } on ServerException {
+      // Primary failed, try cloud fallback
+    } catch (_) {}
+
+    try {
       return await _fallback.fetchChapters();
-    } catch (_) {
-      return await _fallback.fetchChapters();
-    }
+    } catch (_) {}
+
+    // Both APIs failed, use local bundle
+    return await _local.fetchChapters();
   }
 
   Future<List<Verse>> getVerses(
     int chapterId, {
     List<int> translationIds = const [16],
     bool withWords = false,
+    bool withTajweed = false,
   }) async {
     try {
       return await _primary.fetchVerses(
         chapterId,
         translationIds: translationIds,
         withWords: withWords,
+        withTajweed: withTajweed,
       );
     } on ServerException {
-      // Fallback only provides Uthmani text without translations
+      // Primary failed
+    } catch (_) {}
+
+    try {
       return await _fallback.fetchVerses(chapterId);
-    } catch (_) {
-      return await _fallback.fetchVerses(chapterId);
-    }
+    } catch (_) {}
+
+    // Both APIs failed, use local bundle
+    return await _local.fetchVerses(chapterId);
   }
 
-  Future<Verse> getVerseByKey(
+  Future<Verse?> getVerseByKey(
     String verseKey, {
     List<int> translationIds = const [16],
   }) async {
-    return await _primary.fetchVerseByKey(verseKey, translationIds: translationIds);
+    try {
+      return await _primary.fetchVerseByKey(verseKey, translationIds: translationIds);
+    } catch (_) {}
+
+    // Fallback to local
+    return await _local.fetchVerseByKey(verseKey);
   }
 
   Future<String> getTafsirContent(int tafsirId, String verseKey) async {
@@ -71,12 +88,17 @@ class QuranRepository {
     try {
       return await _primary.fetchJuzVerses(juzNumber);
     } on ServerException {
-      // No juz endpoint in AlQuran Cloud, rethrow
       rethrow;
     }
   }
 
   Future<List<SearchResult>> search(String query) async {
-    return await _primary.searchGlobal(query);
+    try {
+      final results = await _primary.searchGlobal(query);
+      if (results.isNotEmpty) return results;
+    } catch (_) {}
+
+    // Fallback to offline FTS5 search
+    return await _local.searchOffline(query);
   }
 }

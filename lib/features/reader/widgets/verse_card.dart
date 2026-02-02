@@ -3,6 +3,8 @@ import '../../../core/utils/arabic_utils.dart';
 import '../../../core/utils/html_sanitizer.dart';
 import '../../../domain/entities/verse.dart';
 import '../../settings/providers/settings_provider.dart';
+import 'tajweed_text.dart';
+import 'word_by_word_widget.dart';
 
 class VerseCard extends StatelessWidget {
   final Verse verse;
@@ -39,6 +41,97 @@ class VerseCard extends StatelessWidget {
       default:
         return 2.2;
     }
+  }
+
+  Widget _buildVerseNumberBadge(int verseNum) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        toArabicNumeral(verseNum),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.amber[800],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArabicText(ThemeData theme, int verseNum) {
+    final textColor = theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface;
+
+    // Word-by-word mode
+    if (settings.showWordByWord && verse.words != null && verse.words!.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          WordByWordWidget(
+            words: verse.words!,
+            fontFamily: settings.quranFont,
+            fontSize: settings.fontSize.toDouble(),
+            textColor: textColor,
+            translationColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildVerseNumberBadge(verseNum),
+          ),
+        ],
+      );
+    }
+
+    // Tajweed color mode
+    if (settings.showTajweed && verse.textUthmaniTajweed != null && verse.textUthmaniTajweed!.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TajweedText(
+            tajweedHtml: verse.textUthmaniTajweed!,
+            fontFamily: settings.quranFont,
+            fontSize: settings.fontSize.toDouble(),
+            lineHeight: _lineHeight,
+            defaultColor: textColor,
+          ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildVerseNumberBadge(verseNum),
+          ),
+        ],
+      );
+    }
+
+    // Default plain text mode
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: verse.textUthmani,
+            style: TextStyle(
+              fontFamily: settings.quranFont,
+              fontSize: settings.fontSize.toDouble(),
+              height: _lineHeight,
+              color: textColor,
+            ),
+          ),
+          const TextSpan(text: '  '),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: _buildVerseNumberBadge(verseNum),
+          ),
+        ],
+      ),
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.rtl,
+    );
   }
 
   @override
@@ -87,48 +180,10 @@ class VerseCard extends StatelessWidget {
             ],
           ),
 
-          // Arabic text
+          // Arabic text - conditional rendering
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: verse.textUthmani,
-                    style: TextStyle(
-                      fontFamily: settings.quranFont,
-                      fontSize: settings.fontSize.toDouble(),
-                      height: _lineHeight,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  const TextSpan(text: '  '),
-                  WidgetSpan(
-                    alignment: PlaceholderAlignment.middle,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        toArabicNumeral(verseNum),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.amber[800],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-            ),
+            child: _buildArabicText(theme, verseNum),
           ),
 
           // Translation

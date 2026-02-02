@@ -5,6 +5,7 @@ class VerseModel extends Verse {
     required super.id,
     required super.verseKey,
     required super.textUthmani,
+    super.textUthmaniTajweed,
     super.translations,
     super.words,
   });
@@ -14,6 +15,7 @@ class VerseModel extends Verse {
       id: json['id'] as int,
       verseKey: json['verse_key'] as String,
       textUthmani: json['text_uthmani'] as String? ?? '',
+      textUthmaniTajweed: json['text_uthmani_tajweed'] as String?,
       translations: (json['translations'] as List<dynamic>?)
           ?.map((t) => TranslationModel.fromJson(t as Map<String, dynamic>))
           .toList(),
@@ -28,6 +30,8 @@ class VerseModel extends Verse {
       'id': id,
       'verse_key': verseKey,
       'text_uthmani': textUthmani,
+      if (textUthmaniTajweed != null)
+        'text_uthmani_tajweed': textUthmaniTajweed,
       if (translations != null)
         'translations': translations!
             .map((t) => {
