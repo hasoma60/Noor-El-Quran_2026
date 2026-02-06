@@ -5,7 +5,9 @@ import '../../../domain/entities/verse.dart';
 import '../../../domain/entities/chapter.dart';
 import '../../home/providers/chapters_provider.dart';
 import '../../settings/providers/settings_provider.dart';
+import '../../../core/constants/quran_constants.dart';
 import '../../../core/utils/arabic_utils.dart';
+import '../widgets/mushaf_navigation_sheet.dart';
 
 final mushafPageDataSourceProvider = Provider<MushafPageDataSource>((ref) {
   return MushafPageDataSource();
@@ -49,25 +51,79 @@ final mushafPageVersesProvider =
   return verses;
 });
 
-class MushafPageView extends ConsumerStatefulWidget {
-  final int initialPage;
-
-  const MushafPageView({super.key, this.initialPage = 1});
-
-  @override
-  ConsumerState<MushafPageView> createState() => _MushafPageViewState();
+/// Returns the juz number for a given chapter:verse.
+int getJuzForVerse(int chapterId, int verseNumber) {
+  for (int i = juzBoundaries.length - 1; i >= 0; i--) {
+    final juz = juzBoundaries[i];
+    final juzCh = juz.chapterId;
+    final juzV = juz.verseNumber;
+    if (chapterId > juzCh || (chapterId == juzCh && verseNumber >= juzV)) {
+      return juz.juz;
+    }
+  }
+  return 1;
 }
 
-class _MushafPageViewState extends ConsumerState<MushafPageView> {
+/// Arabic names for the 30 juz
+const List<String> juzArabicNames = [
+  'الجُزْءُ الأَوَّلُ',
+  'الجُزْءُ الثَّانِي',
+  'الجُزْءُ الثَّالِثُ',
+  'الجُزْءُ الرَّابِعُ',
+  'الجُزْءُ الخَامِسُ',
+  'الجُزْءُ السَّادِسُ',
+  'الجُزْءُ السَّابِعُ',
+  'الجُزْءُ الثَّامِنُ',
+  'الجُزْءُ التَّاسِعُ',
+  'الجُزْءُ العَاشِرُ',
+  'الجُزْءُ الحَادِي عَشَرَ',
+  'الجُزْءُ الثَّانِي عَشَرَ',
+  'الجُزْءُ الثَّالِثَ عَشَرَ',
+  'الجُزْءُ الرَّابِعَ عَشَرَ',
+  'الجُزْءُ الخَامِسَ عَشَرَ',
+  'الجُزْءُ السَّادِسَ عَشَرَ',
+  'الجُزْءُ السَّابِعَ عَشَرَ',
+  'الجُزْءُ الثَّامِنَ عَشَرَ',
+  'الجُزْءُ التَّاسِعَ عَشَرَ',
+  'الجُزْءُ العِشْرُونَ',
+  'الجُزْءُ الحَادِي وَالعِشْرُونَ',
+  'الجُزْءُ الثَّانِي وَالعِشْرُونَ',
+  'الجُزْءُ الثَّالِثُ وَالعِشْرُونَ',
+  'الجُزْءُ الرَّابِعُ وَالعِشْرُونَ',
+  'الجُزْءُ الخَامِسُ وَالعِشْرُونَ',
+  'الجُزْءُ السَّادِسُ وَالعِشْرُونَ',
+  'الجُزْءُ السَّابِعُ وَالعِشْرُونَ',
+  'الجُزْءُ الثَّامِنُ وَالعِشْرُونَ',
+  'الجُزْءُ التَّاسِعُ وَالعِشْرُونَ',
+  'الجُزْءُ الثَّلاَثُونَ',
+];
+
+class MushafPageView extends ConsumerStatefulWidget {
+  final int initialPage;
+  final ValueChanged<int>? onPageChanged;
+
+  const MushafPageView({
+    super.key,
+    this.initialPage = 1,
+    this.onPageChanged,
+  });
+
+  @override
+  ConsumerState<MushafPageView> createState() => MushafPageViewState();
+}
+
+class MushafPageViewState extends ConsumerState<MushafPageView> {
   late PageController _pageController;
   int _currentPage = 1;
+
+  int get currentPage => _currentPage;
 
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialPage;
-    // Reverse index: page 1 is at index 603 (RTL reading)
-    _pageController = PageController(initialPage: 604 - widget.initialPage);
+    // Simple 0-based indexing; reverse: true handles RTL
+    _pageController = PageController(initialPage: widget.initialPage - 1);
   }
 
   @override
@@ -76,9 +132,9 @@ class _MushafPageViewState extends ConsumerState<MushafPageView> {
     super.dispose();
   }
 
-  void _jumpToPage(int page) {
+  void jumpToPage(int page) {
     if (page < 1 || page > 604) return;
-    _pageController.jumpToPage(604 - page);
+    _pageController.jumpToPage(page - 1);
     setState(() => _currentPage = page);
   }
 
@@ -92,15 +148,15 @@ class _MushafPageViewState extends ConsumerState<MushafPageView> {
           controller: controller,
           keyboardType: TextInputType.number,
           textDirection: TextDirection.ltr,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: '١ - ٦٠٤',
             suffixText: '/ 604',
           ),
           autofocus: true,
           onSubmitted: (val) {
             final page = int.tryParse(val);
-            if (page != null) {
-              _jumpToPage(page);
+            if (page != null && page >= 1 && page <= 604) {
+              jumpToPage(page);
               Navigator.pop(context);
             }
           },
@@ -113,8 +169,8 @@ class _MushafPageViewState extends ConsumerState<MushafPageView> {
           TextButton(
             onPressed: () {
               final page = int.tryParse(controller.text);
-              if (page != null) {
-                _jumpToPage(page);
+              if (page != null && page >= 1 && page <= 604) {
+                jumpToPage(page);
                 Navigator.pop(context);
               }
             },
@@ -125,9 +181,28 @@ class _MushafPageViewState extends ConsumerState<MushafPageView> {
     );
   }
 
+  void _showNavigationSheet() {
+    final chapters = ref.read(chaptersProvider).whenOrNull(data: (c) => c) ?? [];
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => MushafNavigationSheet(
+        currentPage: _currentPage,
+        chapters: chapters,
+        onPageSelected: (page) {
+          jumpToPage(page);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pagesAsync = ref.watch(mushafPagesProvider);
+    final chaptersAsync = ref.watch(chaptersProvider);
     final theme = Theme.of(context);
 
     return pagesAsync.when(
@@ -136,55 +211,87 @@ class _MushafPageViewState extends ConsumerState<MushafPageView> {
           return const Center(child: Text('لم يتم تحميل بيانات الصفحات'));
         }
 
-        return Stack(
+        final chapters = chaptersAsync.whenOrNull(data: (c) => c) ?? <Chapter>[];
+
+        // Determine current page surah and juz for the header
+        final currentPageData = (_currentPage >= 1 && _currentPage <= pages.length)
+            ? pages[_currentPage - 1]
+            : null;
+        final currentSurahName = currentPageData != null
+            ? _getSurahNameForPage(currentPageData, chapters)
+            : '';
+        final currentJuz = currentPageData != null
+            ? getJuzForVerse(
+                currentPageData.startChapterId,
+                currentPageData.startVerseNumber,
+              )
+            : 1;
+
+        return Column(
           children: [
-            PageView.builder(
-              controller: _pageController,
-              itemCount: 604,
-              reverse: false, // We handle RTL via index math
-              onPageChanged: (index) {
-                setState(() => _currentPage = 604 - index);
-              },
-              itemBuilder: (context, index) {
-                final pageNumber = 604 - index;
-                if (pageNumber < 1 || pageNumber > pages.length) {
-                  return const SizedBox.shrink();
-                }
-                final page = pages[pageNumber - 1];
-                return _MushafPageContent(
-                  page: page,
-                  pageNumber: pageNumber,
-                );
-              },
+            // Page header: surah name + juz
+            _MushafPageHeader(
+              surahName: currentSurahName,
+              juzNumber: currentJuz,
+              onNavigationTap: _showNavigationSheet,
             ),
-            // Page number indicator at bottom
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: _showPageJumpDialog,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant
-                            .withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      'صفحة ${toArabicNumeral(_currentPage)}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.colorScheme.onSurface,
+
+            // The mushaf page content
+            Expanded(
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: 604,
+                    reverse: true, // RTL: swipe left to go to next page
+                    onPageChanged: (index) {
+                      final page = index + 1;
+                      setState(() => _currentPage = page);
+                      widget.onPageChanged?.call(page);
+                    },
+                    itemBuilder: (context, index) {
+                      final pageNumber = index + 1;
+                      if (pageNumber < 1 || pageNumber > pages.length) {
+                        return const SizedBox.shrink();
+                      }
+                      final page = pages[pageNumber - 1];
+                      return _MushafPageContent(
+                        page: page,
+                        pageNumber: pageNumber,
+                      );
+                    },
+                  ),
+                  // Page number indicator at bottom
+                  Positioned(
+                    bottom: 16,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: _showPageJumpDialog,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant
+                                  .withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Text(
+                            toArabicNumeral(_currentPage),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -192,6 +299,94 @@ class _MushafPageViewState extends ConsumerState<MushafPageView> {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(child: Text('خطأ: $error')),
+    );
+  }
+
+  String _getSurahNameForPage(MushafPage page, List<Chapter> chapters) {
+    final ch = chapters.where((c) => c.id == page.startChapterId).firstOrNull;
+    return ch?.nameArabic ?? '';
+  }
+}
+
+/// Header bar showing surah name and juz number (like traditional mushaf)
+class _MushafPageHeader extends StatelessWidget {
+  final String surahName;
+  final int juzNumber;
+  final VoidCallback onNavigationTap;
+
+  const _MushafPageHeader({
+    required this.surahName,
+    required this.juzNumber,
+    required this.onNavigationTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final juzName = (juzNumber >= 1 && juzNumber <= 30)
+        ? juzArabicNames[juzNumber - 1]
+        : 'الجزء ${toArabicNumeral(juzNumber)}';
+
+    return GestureDetector(
+      onTap: onNavigationTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(
+            bottom: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Surah name (left side in screen = right in RTL context)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  surahName,
+                  style: TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Juz name (right side in screen)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  juzName,
+                  style: TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -252,11 +447,11 @@ class _MushafPageContent extends ConsumerWidget {
                         children: [
                           Text(
                             ch.nameArabic,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'Amiri',
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFFD97706),
+                              color: Color(0xFFD97706),
                             ),
                             textAlign: TextAlign.center,
                           ),

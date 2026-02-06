@@ -36,6 +36,9 @@ class ReaderScreen extends ConsumerStatefulWidget {
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _verseKeys = {};
+  final GlobalKey<MushafPageViewState> _mushafKey = GlobalKey<MushafPageViewState>();
+  bool _hasScrolledToHighlight = false;
+  Future<int>? _mushafPageFuture;
 
   @override
   void initState() {
@@ -51,16 +54,51 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     super.dispose();
   }
 
-  void _scrollToVerse(String verseKey) {
+  /// Scrolls to verse with retry logic for lazy-loaded ListView items
+  void _scrollToVerseRobust(String verseKey, List<Verse> verses) {
+    if (_hasScrolledToHighlight) return;
+
     final key = _verseKeys[verseKey];
     if (key?.currentContext != null) {
+      _hasScrolledToHighlight = true;
       Scrollable.ensureVisible(
         key!.currentContext!,
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
         alignment: 0.3,
       );
+      return;
     }
+
+    // The target verse hasn't been built yet by ListView.builder.
+    // Jump to an estimated position first so it gets built.
+    final verseIndex = verses.indexWhere((v) => v.verseKey == verseKey);
+    if (verseIndex < 0) return;
+
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    // Estimate position proportionally (+1 for header item)
+    final totalItems = verses.length + 2;
+    final targetItem = verseIndex + 1;
+    final proportion = targetItem / totalItems;
+    _scrollController.jumpTo((proportion * maxScroll).clamp(0.0, maxScroll));
+
+    // After the jump renders new items, use ensureVisible for precision
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      final retryKey = _verseKeys[verseKey];
+      if (retryKey?.currentContext != null) {
+        _hasScrolledToHighlight = true;
+        Scrollable.ensureVisible(
+          retryKey!.currentContext!,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.3,
+        );
+      }
+    });
   }
 
   void _showTafsirSheet(BuildContext context, Verse verse, String chapterName) {
@@ -104,6 +142,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => ShareSheet(verse: verse, chapterName: chapterName),
     );
+  }
+
+  /// Gets the initial mushaf page, using verse-level lookup when navigating from bookmark
+  Future<int> _getInitialMushafPageAsync() async {
+    if (widget.highlightVerseKey != null) {
+      final mushafDs = ref.read(mushafPageDataSourceProvider);
+      final page = await mushafDs.getPageForVerse(widget.highlightVerseKey!);
+      if (page != null) return page;
+    }
+    return _getInitialMushafPage();
   }
 
   @override
@@ -157,16 +205,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ],
       ),
       body: settings.readingViewMode == 'mushaf'
-          ? Column(
-              children: [
-                Expanded(
-                  child: MushafPageView(
-                    initialPage: _getInitialMushafPage(ref),
-                  ),
-                ),
-                const AudioPlayerBar(),
-              ],
-            )
+          ? _buildMushafView()
           : Column(
         children: [
           Expanded(
@@ -187,10 +226,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     chapter?.versesCount ?? verses.length,
                   );
 
-                  // Scroll to highlighted verse
-                  if (widget.highlightVerseKey != null) {
-                    Future.delayed(const Duration(milliseconds: 400), () {
-                      _scrollToVerse(widget.highlightVerseKey!);
+                  // Scroll to highlighted verse with robust approach
+                  if (widget.highlightVerseKey != null && !_hasScrolledToHighlight) {
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (mounted) {
+                        _scrollToVerseRobust(widget.highlightVerseKey!, verses);
+                      }
                     });
                   }
                 });
@@ -281,9 +322,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  int _getInitialMushafPage(WidgetRef ref) {
-    // Rough page lookup based on well-known chapter-page mappings
-    // These are the starting pages for each chapter in the standard Mushaf
+  Widget _buildMushafView() {
+    return Column(
+      children: [
+        Expanded(
+          child: FutureBuilder<int>(
+            future: _mushafPageFuture ??= _getInitialMushafPageAsync(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return MushafPageView(
+                key: _mushafKey,
+                initialPage: snapshot.data!,
+              );
+            },
+          ),
+        ),
+        const AudioPlayerBar(),
+      ],
+    );
+  }
+
+  int _getInitialMushafPage() {
     const chapterToPage = <int, int>{
       1: 1, 2: 2, 3: 50, 4: 77, 5: 106, 6: 128, 7: 151, 8: 177, 9: 187,
       10: 208, 11: 221, 12: 235, 13: 249, 14: 255, 15: 262, 16: 267,
@@ -317,10 +378,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         // Chapter name
         Text(
           chapter?.nameArabic ?? '',
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Amiri',
             fontSize: 42,
-            color: const Color(0xFFD97706),
+            color: Color(0xFFD97706),
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
