@@ -53,12 +53,6 @@ scripts/        - generate_quran_data.dart (data generation tool)
 19. **Tajweed Legend**: Bottom sheet showing 7 tajweed rule colors with Arabic names
 20. **Offline Search**: FTS5-based Arabic text search falls back when API is unreachable
 
-## Database Schema (Drift SQLite)
-- `db_chapters` - id PK, nameArabic, nameSimple, nameComplex, versesCount, revelationPlace, revelationOrder, bismillahPre, translatedName
-- `db_verses` - id PK, chapterId FK, verseNumber, verseKey, textUthmani, textUthmaniTajweed (nullable)
-- `db_translations` - id autoIncrement, verseId, resourceId, translationText
-- `verse_fts` (FTS5 virtual table) - verse_key, text_uthmani (content synced from db_verses via triggers)
-
 ## Themes Available
 - Light, Dark, AMOLED (pure black), Sepia, System (auto)
 - Night mode schedule (auto-switch by hour)
@@ -70,7 +64,54 @@ scripts/        - generate_quran_data.dart (data generation tool)
 ## Reciters (18)
 Mishary Alafasy, AbdulBaset (Mujawwad + Murattal), Husary, Maher, Saad Al-Ghamdi, Sudais, Shuraim, Shatri, Rifai, Qatami, Ajmy, Dossari, Minshawi, Basfar, Ali Jaber, Fares Abbad, Ibrahim Al-Akhdar
 
+## Refactoring (2026-02-08) - 5-Phase Comprehensive Overhaul
+
+### Phase 1: Stability & Reliability
+21. **Mushaf Swipe Direction Fix**: Wrapped PageView.builder in `Directionality(textDirection: TextDirection.ltr)` to fix RTL swipe cancellation from global Directionality
+22. **App Logger**: `lib/core/services/app_logger.dart` - Lightweight logger using `dart:developer` with per-class tags for DevTools filtering
+23. **N+1 Query Fix**: Added `getTranslationsForVerses()` batch method using `isIn()` clause - reduces Al-Baqarah from 287 queries to 2
+24. **Database Indexes**: Schema v1->v2 with 4 indexes (idx_verses_chapter_id, idx_verses_verse_key, idx_translations_verse_id, idx_translations_resource_id)
+25. **Transaction-Wrapped DB Init**: `_populateFromBundle()` runs in transaction with integrity check (~6236 verse count validation)
+26. **Fallback Coverage Fixes**: getTafsirContent returns '' on failure, getVerseAudioUrl falls back to AlQuran Cloud CDN, getJuzVerses falls back to local
+27. **LRU Cache Eviction**: CacheService bounded to 200 memory entries with LRU tracking
+28. **Silent Catch Replacement**: ~20+ `catch (_) {}` blocks replaced with AppLogger calls across 10+ files
+
+### Phase 2: Network & Architecture
+29. **API Retry + Backoff**: Exponential backoff (1s, 2s, 4s), retries on 429/500/502/503/504, respects Retry-After header
+30. **Translation ID Fix**: versesProvider now passes `translationIds: settings.activeTranslationIds` (was hardcoded to [16])
+31. **Use Cases**: `GetChapterVerses`, `SearchQuran`, `GetJuzVerses` in `lib/domain/usecases/`
+32. **Route Name Constants**: `lib/core/router/route_names.dart` - all 10 route names as constants
+33. **SharedPreferences Error Fix**: Replaced `throw UnimplementedError()` with `throw StateError()` with diagnostic message
+
+### Phase 3: UI Decomposition
+34. **BaseBottomSheet**: Reusable bottom sheet widget (`lib/core/widgets/base_bottom_sheet.dart`) used by TafsirSheet, NoteSheet, ShareSheet
+35. **Reader Screen Decomposition**: Extracted `ChapterHeader` widget, reduced reader_screen.dart to ~250 LOC orchestrator
+36. **Mushaf Provider Extraction**: Moved providers, getJuzForVerse(), juzArabicNames to `lib/features/reader/providers/mushaf_provider.dart`
+37. **Settings Screen Decomposition**: Extracted 4 section widgets (AppearanceSection, ReadingSection, AudioSection, BackupSection)
+
+### Phase 4: Code Quality & Cleanup
+38. **Unused Font Removal**: Deleted Lateef-Regular.ttf and KFGQPC-Uthmanic-Script-HAFS.otf (~236KB+ saved)
+39. **UI Constants**: `lib/core/constants/ui_constants.dart` - bottomSheetRadius, accentColor, font sizes, line heights, border radii
+40. **Stricter Lint Rules**: analysis_options.yaml: prefer_const_constructors, avoid_print, prefer_final_locals, sized_box_for_whitespace, etc.
+41. **flutter_html Stable**: Updated from ^3.0.0-beta.2 to ^3.0.0 (stable)
+
+### Phase 5: Testing Infrastructure
+42. **Test Data Factory**: `test/helpers/test_data.dart` - shared ChapterModel, VerseModel, SearchResultModel factories
+43. **Repository Tests**: 16 tests covering 3-tier fallback for getChapters, getVerses, getTafsirContent, getVerseAudioUrl, getJuzVerses, search
+44. **Cache Service Tests**: 10 tests covering put/get, TTL expiry, LRU eviction, clearExpired, remove, clearAll, overwrite
+
+## Database Schema (Drift SQLite) - Schema v2
+- `db_chapters` - id PK, nameArabic, nameSimple, nameComplex, versesCount, revelationPlace, revelationOrder, bismillahPre, translatedName
+- `db_verses` - id PK, chapterId FK (indexed), verseNumber, verseKey (indexed), textUthmani, textUthmaniTajweed (nullable)
+- `db_translations` - id autoIncrement, verseId (indexed), resourceId (indexed), translationText
+- `verse_fts` (FTS5 virtual table) - verse_key, text_uthmani (content synced from db_verses via triggers)
+
+## Test Coverage
+- **31 tests total**: 5 util tests + 16 repository tests + 10 cache service tests
+- Run: `flutter test`
+
 ## Known Gaps (remaining)
 - OAuth2 for Quran Foundation API
 - Offline audio caching
 - Advanced tajweed audio sync (word highlighting during playback)
+- Widget tests for home screen and verse card (planned, not yet implemented)

@@ -5,7 +5,11 @@ import '../../../domain/entities/night_mode_schedule.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('Must be overridden in ProviderScope');
+  throw StateError(
+    'SharedPreferences not initialized. '
+    'Ensure SharedPreferences.getInstance() is awaited in main() '
+    'and passed as an override to ProviderScope.',
+  );
 });
 
 final settingsLocalDataSourceProvider = Provider<SettingsLocalDataSource>((ref) {

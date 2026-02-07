@@ -8,6 +8,7 @@ final versesProvider = FutureProvider.family<List<Verse>, int>((ref, chapterId) 
   final settings = ref.watch(settingsProvider);
   return repository.getVerses(
     chapterId,
+    translationIds: settings.activeTranslationIds,
     withWords: settings.showWordByWord,
     withTajweed: settings.showTajweed,
   );

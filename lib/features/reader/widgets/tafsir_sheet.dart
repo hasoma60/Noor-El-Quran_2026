@@ -6,6 +6,7 @@ import '../../settings/providers/settings_provider.dart';
 import '../../../core/constants/quran_constants.dart';
 import '../../../core/utils/arabic_utils.dart';
 import '../../../core/utils/html_sanitizer.dart';
+import '../../../core/widgets/base_bottom_sheet.dart';
 import '../../../domain/entities/verse.dart';
 
 class TafsirSheet extends ConsumerStatefulWidget {
@@ -34,61 +35,12 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
       (tafsirId: _selectedTafsirId, verseKey: widget.verse.verseKey),
     ));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
+    return BaseBottomSheet(
+      title: 'تفسير الآية',
+      subtitle: 'سورة ${widget.chapterName} \u2022 الآية ${toArabicNumeral(widget.verse.verseNumber)}',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'تفسير الآية',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'سورة ${widget.chapterName} \u2022 الآية ${toArabicNumeral(widget.verse.verseNumber)}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-
           // Tafsir source tabs
           SizedBox(
             height: 44,
@@ -101,7 +53,7 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
                 final option = tafsirOptions[index];
                 final selected = option.id == _selectedTafsirId;
                 return FilterChip(
-                  label: Text(option.name, style: TextStyle(fontSize: 12)),
+                  label: Text(option.name, style: const TextStyle(fontSize: 12)),
                   selected: selected,
                   onSelected: (_) => setState(() => _selectedTafsirId = option.id),
                   selectedColor: const Color(0xFFD97706),
@@ -116,7 +68,6 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
           ),
 
           const SizedBox(height: 8),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
 
           // Content
           Flexible(
@@ -182,3 +133,4 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
     );
   }
 }
+

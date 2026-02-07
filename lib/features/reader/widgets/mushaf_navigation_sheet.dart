@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/chapter.dart';
 import '../../../domain/entities/bookmark.dart';
-import '../../../core/constants/quran_constants.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/arabic_utils.dart';
 import '../../home/providers/bookmark_provider.dart';
-import '../screens/mushaf_view.dart';
+import '../providers/mushaf_provider.dart';
 
 /// Starting page for each chapter in the standard Mushaf
 const Map<int, int> chapterStartPages = {
@@ -200,12 +199,12 @@ class _SurahIndexTab extends StatelessWidget {
               children: [
                 // Bookmark icon for current surah
                 if (isCurrentSurah)
-                  Padding(
-                    padding: const EdgeInsetsDirectional.only(end: 8),
+                  const Padding(
+                    padding: EdgeInsetsDirectional.only(end: 8),
                     child: Icon(
                       Icons.bookmark,
                       size: 20,
-                      color: const Color(0xFFD97706),
+                      color: Color(0xFFD97706),
                     ),
                   ),
 
@@ -432,10 +431,10 @@ class _BookmarksTab extends ConsumerWidget {
                     children: [
                       Text(
                         '${bookmark.chapterName} \u2022 ${bookmark.verseKey}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFD97706),
+                          color: Color(0xFFD97706),
                         ),
                         textDirection: TextDirection.rtl,
                       ),

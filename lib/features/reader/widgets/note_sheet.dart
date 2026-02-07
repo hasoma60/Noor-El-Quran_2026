@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/arabic_utils.dart';
+import '../../../core/widgets/base_bottom_sheet.dart';
 import '../../../domain/entities/verse.dart';
 
 class NoteSheet extends StatefulWidget {
@@ -39,92 +40,55 @@ class _NoteSheetState extends State<NoteSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+      child: BaseBottomSheet(
+        title: widget.existingNote != null ? 'تعديل الملاحظة' : 'إضافة ملاحظة',
+        subtitle: 'سورة ${widget.chapterName} \u2022 آية ${toArabicNumeral(widget.verse.verseNumber)}',
+        maxHeightFraction: 0.6,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Text field
+              TextField(
+                controller: _controller,
+                maxLines: 4,
+                textDirection: TextDirection.rtl,
+                decoration: const InputDecoration(
+                  hintText: 'اكتب ملاحظتك...',
                 ),
+                autofocus: true,
               ),
-            ),
 
-            // Header
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.existingNote != null ? 'تعديل الملاحظة' : 'إضافة ملاحظة',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  ),
+              const SizedBox(height: 16),
+
+              // Save button
+              FilledButton(
+                onPressed: () {
+                  final text = _controller.text.trim();
+                  if (text.isNotEmpty) {
+                    widget.onSave(text);
+                    Navigator.pop(context);
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD97706),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-
-            // Reference
-            Text(
-              'سورة ${widget.chapterName} \u2022 آية ${toArabicNumeral(widget.verse.verseNumber)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.amber[700],
+                child: const Text('حفظ', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Text field
-            TextField(
-              controller: _controller,
-              maxLines: 4,
-              textDirection: TextDirection.rtl,
-              decoration: const InputDecoration(
-                hintText: 'اكتب ملاحظتك...',
-              ),
-              autofocus: true,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Save button
-            FilledButton(
-              onPressed: () {
-                final text = _controller.text.trim();
-                if (text.isNotEmpty) {
-                  widget.onSave(text);
-                  Navigator.pop(context);
-                }
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFD97706),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('حفظ', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

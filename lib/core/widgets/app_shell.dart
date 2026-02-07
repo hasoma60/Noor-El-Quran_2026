@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/reader/providers/audio_provider.dart';
+import '../router/route_names.dart';
 
 class AppShell extends ConsumerWidget {
   final Widget child;
@@ -35,11 +36,11 @@ class AppShell extends ConsumerWidget {
             onDestinationSelected: (index) {
               switch (index) {
                 case 0:
-                  context.goNamed('home');
+                  context.goNamed(RouteNames.home);
                 case 1:
-                  context.goNamed('bookmarks');
+                  context.goNamed(RouteNames.bookmarks);
                 case 2:
-                  context.goNamed('settings');
+                  context.goNamed(RouteNames.settings);
               }
             },
             destinations: const [
@@ -99,10 +100,10 @@ class _MiniAudioPlayer extends ConsumerWidget {
             child: Row(
               children: [
                 // Playing indicator
-                Icon(
+                const Icon(
                   Icons.music_note,
                   size: 16,
-                  color: const Color(0xFFD97706),
+                  color: Color(0xFFD97706),
                 ),
                 const SizedBox(width: 8),
 

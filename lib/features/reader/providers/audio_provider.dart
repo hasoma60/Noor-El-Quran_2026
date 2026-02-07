@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../../core/constants/quran_constants.dart';
+import '../../../core/services/app_logger.dart';
 import '../../../data/repositories/quran_repository.dart';
 import '../../home/providers/chapters_provider.dart';
 import '../../settings/providers/settings_provider.dart';
@@ -79,6 +80,7 @@ class AudioState {
 
 /// Audio notifier wrapping just_audio AudioPlayer
 class AudioNotifier extends StateNotifier<AudioState> {
+  static const _log = AppLogger('AudioNotifier');
   final AudioPlayer _player;
   final QuranRepository _repository;
   final Ref _ref;
@@ -163,10 +165,12 @@ class AudioNotifier extends StateNotifier<AudioState> {
         await _player.setUrl(url);
         await _player.setSpeed(state.playbackSpeed);
         await _player.play();
-      } catch (_) {
+      } catch (e) {
+        _log.error('Failed to play chapter $chapterId audio', e);
         state = state.copyWith(isLoading: false, isPlaying: false);
       }
     } else {
+      _log.warning('No audio URL found for chapter $chapterId');
       state = state.copyWith(isLoading: false, isPlaying: false);
     }
   }
@@ -207,10 +211,12 @@ class AudioNotifier extends StateNotifier<AudioState> {
         await _player.setUrl(url);
         await _player.setSpeed(state.playbackSpeed);
         await _player.play();
-      } catch (_) {
+      } catch (e) {
+        _log.error('Failed to play verse $verseKey audio', e);
         state = state.copyWith(isLoading: false, isPlaying: false);
       }
     } else {
+      _log.warning('No audio URL found for verse $verseKey');
       state = state.copyWith(isLoading: false, isPlaying: false);
     }
   }

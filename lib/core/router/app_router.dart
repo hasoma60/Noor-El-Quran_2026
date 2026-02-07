@@ -11,6 +11,7 @@ import '../../features/memorization/screens/memorization_screen.dart';
 import '../../features/stats/screens/stats_screen.dart';
 import '../../features/thematic/screens/thematic_screen.dart';
 import '../widgets/app_shell.dart';
+import 'route_names.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -25,21 +26,21 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          name: 'home',
+          name: RouteNames.home,
           pageBuilder: (context, state) => const NoTransitionPage(
             child: HomeScreen(),
           ),
         ),
         GoRoute(
           path: '/bookmarks',
-          name: 'bookmarks',
+          name: RouteNames.bookmarks,
           pageBuilder: (context, state) => const NoTransitionPage(
             child: BookmarksScreen(),
           ),
         ),
         GoRoute(
           path: '/settings',
-          name: 'settings',
+          name: RouteNames.settings,
           pageBuilder: (context, state) => const NoTransitionPage(
             child: SettingsScreen(),
           ),
@@ -48,7 +49,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/reader/:chapterId',
-      name: 'reader',
+      name: RouteNames.reader,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final chapterId = int.parse(state.pathParameters['chapterId']!);
@@ -58,37 +59,37 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/notes',
-      name: 'notes',
+      name: RouteNames.notes,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const NotesScreen(),
     ),
     GoRoute(
       path: '/juz',
-      name: 'juz',
+      name: RouteNames.juz,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const JuzNavigatorScreen(),
     ),
     GoRoute(
       path: '/khatmah',
-      name: 'khatmah',
+      name: RouteNames.khatmah,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const KhatmahScreen(),
     ),
     GoRoute(
       path: '/memorization',
-      name: 'memorization',
+      name: RouteNames.memorization,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const MemorizationScreen(),
     ),
     GoRoute(
       path: '/stats',
-      name: 'stats',
+      name: RouteNames.stats,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const StatsScreen(),
     ),
     GoRoute(
       path: '/thematic',
-      name: 'thematic',
+      name: RouteNames.thematic,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ThematicScreen(),
     ),

@@ -103,7 +103,7 @@ class _KhatmahScreenState extends ConsumerState<KhatmahScreen> {
       name: name,
       totalDays: totalDays,
       startDate: DateTime.now().millisecondsSinceEpoch,
-      completedDays: {},
+      completedDays: const {},
       currentDay: 0,
       dailyTarget: dailyTarget,
     );

@@ -10,45 +10,66 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'noor_alquran'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (m) async {
         await m.createAll();
-        // Create FTS5 virtual table for offline search
-        await customStatement('''
-          CREATE VIRTUAL TABLE IF NOT EXISTS verse_fts USING fts5(
-            verse_key,
-            text_uthmani,
-            content=db_verses,
-            content_rowid=id
-          )
-        ''');
-        // Create triggers to keep FTS index in sync
-        await customStatement('''
-          CREATE TRIGGER IF NOT EXISTS verses_ai AFTER INSERT ON db_verses BEGIN
-            INSERT INTO verse_fts(rowid, verse_key, text_uthmani)
-            VALUES (new.id, new.verse_key, new.text_uthmani);
-          END
-        ''');
-        await customStatement('''
-          CREATE TRIGGER IF NOT EXISTS verses_ad AFTER DELETE ON db_verses BEGIN
-            INSERT INTO verse_fts(verse_fts, rowid, verse_key, text_uthmani)
-            VALUES ('delete', old.id, old.verse_key, old.text_uthmani);
-          END
-        ''');
-        await customStatement('''
-          CREATE TRIGGER IF NOT EXISTS verses_au AFTER UPDATE ON db_verses BEGIN
-            INSERT INTO verse_fts(verse_fts, rowid, verse_key, text_uthmani)
-            VALUES ('delete', old.id, old.verse_key, old.text_uthmani);
-            INSERT INTO verse_fts(rowid, verse_key, text_uthmani)
-            VALUES (new.id, new.verse_key, new.text_uthmani);
-          END
-        ''');
+        await _createFtsAndIndexes();
+      },
+      onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          await _createIndexes();
+        }
       },
     );
+  }
+
+  Future<void> _createFtsAndIndexes() async {
+    // Create FTS5 virtual table for offline search
+    await customStatement('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS verse_fts USING fts5(
+        verse_key,
+        text_uthmani,
+        content=db_verses,
+        content_rowid=id
+      )
+    ''');
+    // Create triggers to keep FTS index in sync
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS verses_ai AFTER INSERT ON db_verses BEGIN
+        INSERT INTO verse_fts(rowid, verse_key, text_uthmani)
+        VALUES (new.id, new.verse_key, new.text_uthmani);
+      END
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS verses_ad AFTER DELETE ON db_verses BEGIN
+        INSERT INTO verse_fts(verse_fts, rowid, verse_key, text_uthmani)
+        VALUES ('delete', old.id, old.verse_key, old.text_uthmani);
+      END
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS verses_au AFTER UPDATE ON db_verses BEGIN
+        INSERT INTO verse_fts(verse_fts, rowid, verse_key, text_uthmani)
+        VALUES ('delete', old.id, old.verse_key, old.text_uthmani);
+        INSERT INTO verse_fts(rowid, verse_key, text_uthmani)
+        VALUES (new.id, new.verse_key, new.text_uthmani);
+      END
+    ''');
+    await _createIndexes();
+  }
+
+  Future<void> _createIndexes() async {
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_verses_chapter_id ON db_verses(chapter_id)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_verses_verse_key ON db_verses(verse_key)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_translations_verse_id ON db_translations(verse_id)');
+    await customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_translations_resource_id ON db_translations(resource_id)');
   }
 
   // --- Chapter operations ---
@@ -75,6 +96,20 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<DbTranslation>> getTranslationsForVerse(int verseId) =>
       (select(dbTranslations)..where((t) => t.verseId.equals(verseId))).get();
+
+  /// Batch fetch: get all translations for a list of verse IDs in one query.
+  Future<Map<int, List<DbTranslation>>> getTranslationsForVerses(
+      List<int> verseIds) async {
+    if (verseIds.isEmpty) return {};
+    final results = await (select(dbTranslations)
+          ..where((t) => t.verseId.isIn(verseIds)))
+        .get();
+    final map = <int, List<DbTranslation>>{};
+    for (final t in results) {
+      map.putIfAbsent(t.verseId, () => []).add(t);
+    }
+    return map;
+  }
 
   // --- Batch insert operations ---
 

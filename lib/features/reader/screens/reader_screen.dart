@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../providers/reader_provider.dart';
 import '../providers/audio_provider.dart';
+import '../providers/mushaf_provider.dart';
 import '../../home/providers/chapters_provider.dart';
 import '../../home/providers/progress_provider.dart';
 import '../../home/providers/bookmark_provider.dart';
@@ -13,6 +14,7 @@ import '../widgets/tafsir_sheet.dart';
 import '../widgets/note_sheet.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/audio_player_bar.dart';
+import '../widgets/chapter_header.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../core/widgets/error_widget.dart';
 import '../../../core/utils/arabic_utils.dart';
@@ -159,7 +161,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final chaptersAsync = ref.watch(chaptersProvider);
     final versesAsync = ref.watch(versesProvider(widget.chapterId));
     final settings = ref.watch(settingsProvider);
-    final theme = Theme.of(context);
 
     final chapter = chaptersAsync.whenOrNull(
       data: (chapters) => chapters.where((c) => c.id == widget.chapterId).firstOrNull,
@@ -268,7 +269,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     itemBuilder: (context, index) {
                       // Header
                       if (index == 0) {
-                        return _buildHeader(chapter, settings, theme);
+                        return ChapterHeader(
+                          chapter: chapter,
+                          chapterId: widget.chapterId,
+                          settings: settings,
+                        );
                       }
 
                       // Footer padding
@@ -367,55 +372,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     return chapterToPage[widget.chapterId] ?? 1;
   }
 
-  Widget _buildHeader(dynamic chapter, SettingsState settings, ThemeData theme) {
-    final showBismillah = chapter?.bismillahPre ?? true;
-    // Surah At-Tawbah (9) has no bismillah
-    final isTawbah = widget.chapterId == 9;
-
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        // Chapter name
-        Text(
-          chapter?.nameArabic ?? '',
-          style: const TextStyle(
-            fontFamily: 'Amiri',
-            fontSize: 42,
-            color: Color(0xFFD97706),
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${chapter?.revelationPlace == "makkah" ? "مكية" : "مدنية"} \u2022 ${toArabicNumeral(chapter?.versesCount ?? 0)} آية',
-          style: TextStyle(
-            fontSize: 13,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 24),
-
-        // Bismillah
-        if (showBismillah && !isTawbah) ...[
-          Text(
-            'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ',
-            style: TextStyle(
-              fontFamily: settings.quranFont,
-              fontSize: 28,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-        ],
-
-        Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
 }
 
 /// App bar button for chapter-level audio playback

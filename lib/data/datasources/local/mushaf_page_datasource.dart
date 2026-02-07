@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import '../../../core/services/app_logger.dart';
 
 class MushafPage {
   final int page;
@@ -20,6 +21,7 @@ class MushafPage {
 
 /// Loads mushaf page mapping data from bundled JSON.
 class MushafPageDataSource {
+  static const _log = AppLogger('MushafPageDS');
   List<MushafPage>? _pages;
   bool _initialized = false;
 
@@ -41,7 +43,8 @@ class MushafPageDataSource {
         );
       }).toList();
       _initialized = true;
-    } catch (_) {
+    } catch (e, st) {
+      _log.error('Failed to initialize mushaf page data', e, st);
       _initialized = false;
     }
   }

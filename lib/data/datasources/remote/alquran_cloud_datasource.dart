@@ -73,4 +73,24 @@ class AlQuranCloudDataSource {
       return null;
     }
   }
+
+  /// Construct a verse audio URL from AlQuran Cloud CDN.
+  /// Format: https://cdn.islamic.network/quran/audio/128/ar.alafasy/{absoluteVerseNumber}.mp3
+  Future<String?> fetchVerseAudioUrl(String verseKey, {String reciter = 'ar.alafasy'}) async {
+    try {
+      // Fetch the verse to get the absolute verse number
+      final parts = verseKey.split(':');
+      if (parts.length != 2) return null;
+      final chapterId = int.tryParse(parts[0]);
+      final verseNum = int.tryParse(parts[1]);
+      if (chapterId == null || verseNum == null) return null;
+
+      final response = await _dio.get('/ayah/$verseKey');
+      final data = response.data['data'] as Map<String, dynamic>;
+      final absoluteNumber = data['number'] as int;
+      return 'https://cdn.islamic.network/quran/audio/128/$reciter/$absoluteNumber.mp3';
+    } catch (e) {
+      return null;
+    }
+  }
 }

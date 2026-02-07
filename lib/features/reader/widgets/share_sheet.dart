@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/arabic_utils.dart';
 import '../../../core/utils/html_sanitizer.dart';
+import '../../../core/widgets/base_bottom_sheet.dart';
 import '../../../domain/entities/verse.dart';
 
 class ShareSheet extends ConsumerWidget {
@@ -26,48 +27,15 @@ class ShareSheet extends ConsumerWidget {
     final reference = 'سورة $chapterName - الآية ${toArabicNumeral(verse.verseNumber)}';
     final fullText = '${verse.textUthmani}\n\n${cleanTranslation.isNotEmpty ? "$cleanTranslation\n\n" : ""}- $reference';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+    return BaseBottomSheet(
+      title: 'مشاركة الآية',
+      maxHeightFraction: 0.6,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            // Header
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'مشاركة الآية',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
             // Preview
             Container(
               padding: const EdgeInsets.all(16),
