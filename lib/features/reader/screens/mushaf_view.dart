@@ -122,8 +122,9 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
   void initState() {
     super.initState();
     _currentPage = widget.initialPage;
-    // Simple 0-based indexing; reverse: true handles RTL
-    _pageController = PageController(initialPage: widget.initialPage - 1);
+    // Reversed indexing: index 0 = page 604 (leftmost), index 603 = page 1 (rightmost)
+    // This lets swipe L→R advance pages naturally (Arabic reading direction)
+    _pageController = PageController(initialPage: 604 - widget.initialPage);
   }
 
   @override
@@ -134,7 +135,7 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
 
   void jumpToPage(int page) {
     if (page < 1 || page > 604) return;
-    _pageController.jumpToPage(page - 1);
+    _pageController.jumpToPage(604 - page);
     setState(() => _currentPage = page);
   }
 
@@ -243,14 +244,15 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
                   PageView.builder(
                     controller: _pageController,
                     itemCount: 604,
-                    reverse: true, // RTL: swipe left to go to next page
+                    // No reverse: index 0=page 604 (left), index 603=page 1 (right)
+                    // Swipe L→R advances pages (Arabic reading direction)
                     onPageChanged: (index) {
-                      final page = index + 1;
+                      final page = 604 - index;
                       setState(() => _currentPage = page);
                       widget.onPageChanged?.call(page);
                     },
                     itemBuilder: (context, index) {
-                      final pageNumber = index + 1;
+                      final pageNumber = 604 - index;
                       if (pageNumber < 1 || pageNumber > pages.length) {
                         return const SizedBox.shrink();
                       }
