@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/datasources/local/mushaf_page_datasource.dart';
 import '../../../domain/entities/chapter.dart';
+import '../../../domain/entities/verse.dart';
 import '../../home/providers/chapters_provider.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/arabic_utils.dart';
