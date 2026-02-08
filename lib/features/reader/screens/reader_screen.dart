@@ -55,8 +55,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   /// Scrolls to verse with retry logic for lazy-loaded ListView items
-  void _scrollToVerseRobust(String verseKey, List<Verse> verses) {
-    if (_hasScrolledToHighlight) return;
+  void _scrollToVerseRobust(String verseKey, List<Verse> verses, [int attempt = 0]) {
+    if (_hasScrolledToHighlight || !mounted) return;
 
     final key = _verseKeys[verseKey];
     if (key?.currentContext != null) {
@@ -77,7 +77,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     if (!_scrollController.hasClients) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
+    if (maxScroll <= 0) {
+      // Layout not ready yet, retry after a short delay
+      if (attempt < 5) {
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) _scrollToVerseRobust(verseKey, verses, attempt + 1);
+        });
+      }
+      return;
+    }
 
     // Estimate position proportionally (+1 for header item)
     final totalItems = verses.length + 2;
@@ -97,6 +105,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           curve: Curves.easeInOut,
           alignment: 0.3,
         );
+      } else if (attempt < 5) {
+        // Verse still not visible after jump, retry with adjusted estimate
+        _scrollToVerseRobust(verseKey, verses, attempt + 1);
       }
     });
   }
@@ -335,6 +346,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               return MushafPageView(
                 key: _mushafKey,
                 initialPage: snapshot.data!,
+                highlightVerseKey: widget.highlightVerseKey,
               );
             },
           ),
