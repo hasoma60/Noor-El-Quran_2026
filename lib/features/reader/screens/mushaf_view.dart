@@ -11,11 +11,13 @@ import '../providers/mushaf_provider.dart';
 class MushafPageView extends ConsumerStatefulWidget {
   final int initialPage;
   final ValueChanged<int>? onPageChanged;
+  final String? highlightVerseKey;
 
   const MushafPageView({
     super.key,
     this.initialPage = 1,
     this.onPageChanged,
+    this.highlightVerseKey,
   });
 
   @override
@@ -172,6 +174,7 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
                       return _MushafPageContent(
                         page: page,
                         pageNumber: pageNumber,
+                        highlightVerseKey: widget.highlightVerseKey,
                       );
                     },
                   ),
@@ -306,18 +309,48 @@ class _MushafPageHeader extends StatelessWidget {
   }
 }
 
-class _MushafPageContent extends ConsumerWidget {
+class _MushafPageContent extends ConsumerStatefulWidget {
   final MushafPage page;
   final int pageNumber;
+  final String? highlightVerseKey;
 
   const _MushafPageContent({
     required this.page,
     required this.pageNumber,
+    this.highlightVerseKey,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final versesAsync = ref.watch(mushafPageVersesProvider(page));
+  ConsumerState<_MushafPageContent> createState() => _MushafPageContentState();
+}
+
+class _MushafPageContentState extends ConsumerState<_MushafPageContent> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _highlightKey = GlobalKey();
+  bool _hasScrolledToHighlight = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToHighlight() {
+    if (_hasScrolledToHighlight) return;
+    if (_highlightKey.currentContext != null) {
+      _hasScrolledToHighlight = true;
+      Scrollable.ensureVisible(
+        _highlightKey.currentContext!,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.3,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final versesAsync = ref.watch(mushafPageVersesProvider(widget.page));
     final settings = ref.watch(settingsProvider);
     final chaptersAsync = ref.watch(chaptersProvider);
     final theme = Theme.of(context);
@@ -343,9 +376,83 @@ class _MushafPageContent extends ConsumerWidget {
           }
         }
 
+        // Find the index of the highlighted verse for scroll estimation
+        final highlightIndex = widget.highlightVerseKey != null
+            ? verses.indexWhere((v) => v.verseKey == widget.highlightVerseKey)
+            : -1;
+
+        // Schedule scroll to highlight after frame renders
+        if (highlightIndex >= 0 && !_hasScrolledToHighlight) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            // First try ensureVisible on the highlight key
+            if (_highlightKey.currentContext != null) {
+              _scrollToHighlight();
+            } else {
+              // Estimate scroll position and try again
+              final proportion = highlightIndex / verses.length;
+              final maxScroll = _scrollController.hasClients
+                  ? _scrollController.position.maxScrollExtent
+                  : 0.0;
+              if (maxScroll > 0) {
+                _scrollController.jumpTo(
+                  (proportion * maxScroll).clamp(0.0, maxScroll),
+                );
+              }
+              Future.delayed(const Duration(milliseconds: 200), () {
+                if (mounted) _scrollToHighlight();
+              });
+            }
+          });
+        }
+
+        // Split verses into pre-highlight, highlight, and post-highlight groups
+        // to allow placing a key on the highlighted verse for scroll targeting
+        Widget buildVerseSpans(List<Verse> verseGroup, {bool hasHighlight = false}) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Text.rich(
+              TextSpan(
+                children: verseGroup.expand((verse) {
+                  final isHighlighted = widget.highlightVerseKey != null &&
+                      verse.verseKey == widget.highlightVerseKey;
+                  return [
+                    TextSpan(
+                      text: verse.textUthmani,
+                      style: TextStyle(
+                        fontFamily: settings.quranFont,
+                        fontSize: settings.fontSize.toDouble(),
+                        height: 2.0,
+                        color: theme.textTheme.bodyLarge?.color,
+                        backgroundColor: isHighlighted
+                            ? const Color(0xFFD97706).withValues(alpha: 0.15)
+                            : null,
+                      ),
+                    ),
+                    TextSpan(
+                      text:
+                          ' \uFD3F${toArabicNumeral(verse.verseNumber)}\uFD3E ',
+                      style: TextStyle(
+                        fontFamily: settings.quranFont,
+                        fontSize: settings.fontSize.toDouble() * 0.7,
+                        color: const Color(0xFFD97706),
+                        backgroundColor: isHighlighted
+                            ? const Color(0xFFD97706).withValues(alpha: 0.15)
+                            : null,
+                      ),
+                    ),
+                  ];
+                }).toList(),
+              ),
+              textAlign: TextAlign.justify,
+            ),
+          );
+        }
+
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 48),
           child: SingleChildScrollView(
+            controller: _scrollController,
             child: Column(
               children: [
                 // Build verse text with chapter headers inline
@@ -398,36 +505,21 @@ class _MushafPageContent extends ConsumerWidget {
                 }),
 
                 // All verses as continuous text (mushaf style)
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Text.rich(
-                    TextSpan(
-                      children: verses.expand((verse) {
-                        return [
-                          TextSpan(
-                            text: verse.textUthmani,
-                            style: TextStyle(
-                              fontFamily: settings.quranFont,
-                              fontSize: settings.fontSize.toDouble(),
-                              height: 2.0,
-                              color: theme.textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                          TextSpan(
-                            text:
-                                ' \uFD3F${toArabicNumeral(verse.verseNumber)}\uFD3E ',
-                            style: TextStyle(
-                              fontFamily: settings.quranFont,
-                              fontSize: settings.fontSize.toDouble() * 0.7,
-                              color: const Color(0xFFD97706),
-                            ),
-                          ),
-                        ];
-                      }).toList(),
+                // If we have a highlight, split into sections for scroll targeting
+                if (highlightIndex >= 0) ...[
+                  if (highlightIndex > 0)
+                    buildVerseSpans(verses.sublist(0, highlightIndex)),
+                  Container(
+                    key: _highlightKey,
+                    child: buildVerseSpans(
+                      [verses[highlightIndex]],
+                      hasHighlight: true,
                     ),
-                    textAlign: TextAlign.justify,
                   ),
-                ),
+                  if (highlightIndex < verses.length - 1)
+                    buildVerseSpans(verses.sublist(highlightIndex + 1)),
+                ] else
+                  buildVerseSpans(verses),
               ],
             ),
           ),
