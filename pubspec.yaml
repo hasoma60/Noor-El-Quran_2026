@@ -85,6 +85,9 @@ flutter:
     - family: Noto Naskh Arabic
       fonts:
         - asset: assets/fonts/NotoNaskhArabic-Regular.ttf
+    - family: Hafs Smart
+      fonts:
+        - asset: assets/fonts/HafsSmart8.ttf
     - family: Cairo
       fonts:
         - asset: assets/fonts/Cairo-Regular.ttf

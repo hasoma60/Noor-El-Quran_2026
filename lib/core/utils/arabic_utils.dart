@@ -7,6 +7,18 @@ String toArabicNumeral(int number) {
   }).join();
 }
 
+/// Returns a Quran-style ayah marker.
+///
+/// `native`: ۝١
+/// `badge`: ﴿١﴾
+String formatAyahMarker(int verseNumber, {String style = 'native'}) {
+  final num = toArabicNumeral(verseNumber);
+  if (style == 'badge') {
+    return '\uFD3F$num\uFD3E';
+  }
+  return '\u06DD$num';
+}
+
 /// Formats a verse key like "2:255" to "البقرة ٢٥٥"
 String formatVerseReference(String verseKey, {String? chapterName}) {
   final parts = verseKey.split(':');

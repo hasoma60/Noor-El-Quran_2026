@@ -34,7 +34,8 @@ class ReadingSection extends StatelessWidget {
         // Font size
         Text(
           'حجم الخط: ${settings.fontSize}',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         Slider(
           value: settings.fontSize.toDouble(),
@@ -48,7 +49,8 @@ class ReadingSection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            color: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -68,10 +70,11 @@ class ReadingSection extends StatelessWidget {
         // Quran font
         Text(
           'خط القرآن',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...['Amiri', 'Scheherazade New', 'Noto Naskh Arabic'].map(
+        ...['Hafs Smart', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic'].map(
           (font) => RadioListTile<String>(
             title: Text(font, style: TextStyle(fontFamily: font, fontSize: 18)),
             value: font,
@@ -82,10 +85,39 @@ class ReadingSection extends StatelessWidget {
 
         const SizedBox(height: 16),
 
+        // Script mode
+        Text(
+          'وضع النص',
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'madinah', label: Text('مصحف المدينة')),
+            ButtonSegment(value: 'modern', label: Text('مرن')),
+          ],
+          selected: {settings.scriptMode},
+          onSelectionChanged: (v) => notifier.setScriptMode(v.first),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          settings.scriptMode == 'madinah'
+              ? 'تهيئة صارمة للتشكيل وتباعد الأسطر (موصى به للقراءة الطويلة)'
+              : 'وضع مرن للتوافق مع خطوط متعددة',
+          style: TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
         // Line height
         Text(
           'تباعد الأسطر',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
@@ -99,6 +131,34 @@ class ReadingSection extends StatelessWidget {
         ),
 
         const SizedBox(height: 24),
+
+        // Ayah number style
+        Text(
+          'ترقيم الآيات',
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'native', label: Text('قرآني')),
+            ButtonSegment(value: 'badge', label: Text('دائري')),
+          ],
+          selected: {settings.ayahNumberStyle},
+          onSelectionChanged: (v) => notifier.setAyahNumberStyle(v.first),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Resume mode
+        SwitchListTile(
+          title: const Text('استئناف آخر موضع عند الفتح'),
+          subtitle: const Text('فتح التطبيق على آخر آية/صفحة تمت قراءتها'),
+          value: settings.autoResumeLastAyah,
+          onChanged: notifier.setAutoResumeLastAyah,
+        ),
+
+        const SizedBox(height: 8),
 
         // Show translation
         SwitchListTile(

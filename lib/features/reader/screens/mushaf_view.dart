@@ -12,12 +12,14 @@ import '../providers/mushaf_provider.dart';
 class MushafPageView extends ConsumerStatefulWidget {
   final int initialPage;
   final ValueChanged<int>? onPageChanged;
+  final ValueChanged<MushafPage>? onPageDataChanged;
   final String? highlightVerseKey;
 
   const MushafPageView({
     super.key,
     this.initialPage = 1,
     this.onPageChanged,
+    this.onPageDataChanged,
     this.highlightVerseKey,
   });
 
@@ -28,6 +30,7 @@ class MushafPageView extends ConsumerStatefulWidget {
 class MushafPageViewState extends ConsumerState<MushafPageView> {
   late PageController _pageController;
   int _currentPage = 1;
+  bool _reportedInitialPage = false;
 
   int get currentPage => _currentPage;
 
@@ -57,7 +60,8 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('الانتقال إلى صفحة', textDirection: TextDirection.rtl),
+        title:
+            const Text('الانتقال إلى صفحة', textDirection: TextDirection.rtl),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
@@ -96,7 +100,8 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
   }
 
   void _showNavigationSheet() {
-    final chapters = ref.read(chaptersProvider).whenOrNull(data: (c) => c) ?? [];
+    final chapters =
+        ref.read(chaptersProvider).whenOrNull(data: (c) => c) ?? [];
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -125,12 +130,14 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
           return const Center(child: Text('لم يتم تحميل بيانات الصفحات'));
         }
 
-        final chapters = chaptersAsync.whenOrNull(data: (c) => c) ?? <Chapter>[];
+        final chapters =
+            chaptersAsync.whenOrNull(data: (c) => c) ?? <Chapter>[];
 
         // Determine current page surah and juz for the header
-        final currentPageData = (_currentPage >= 1 && _currentPage <= pages.length)
-            ? pages[_currentPage - 1]
-            : null;
+        final currentPageData =
+            (_currentPage >= 1 && _currentPage <= pages.length)
+                ? pages[_currentPage - 1]
+                : null;
         final currentSurahName = currentPageData != null
             ? _getSurahNameForPage(currentPageData, chapters)
             : '';
@@ -140,6 +147,15 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
                 currentPageData.startVerseNumber,
               )
             : 1;
+
+        if (!_reportedInitialPage && currentPageData != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || _reportedInitialPage) return;
+            _reportedInitialPage = true;
+            widget.onPageChanged?.call(_currentPage);
+            widget.onPageDataChanged?.call(currentPageData);
+          });
+        }
 
         return Column(
           children: [
@@ -157,28 +173,31 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: 604,
-                    // Override global RTL: index 0=page 604 (left), index 603=page 1 (right)
-                    // In LTR mode, swipe L→R decreases index = higher page = next page
-                    onPageChanged: (index) {
-                      final page = 604 - index;
-                      setState(() => _currentPage = page);
-                      widget.onPageChanged?.call(page);
-                    },
-                    itemBuilder: (context, index) {
-                      final pageNumber = 604 - index;
-                      if (pageNumber < 1 || pageNumber > pages.length) {
-                        return const SizedBox.shrink();
-                      }
-                      final page = pages[pageNumber - 1];
-                      return _MushafPageContent(
-                        page: page,
-                        pageNumber: pageNumber,
-                        highlightVerseKey: widget.highlightVerseKey,
-                      );
-                    },
-                  ),
+                      controller: _pageController,
+                      itemCount: 604,
+                      // Override global RTL: index 0=page 604 (left), index 603=page 1 (right)
+                      // In LTR mode, swipe L→R decreases index = higher page = next page
+                      onPageChanged: (index) {
+                        final page = 604 - index;
+                        setState(() => _currentPage = page);
+                        widget.onPageChanged?.call(page);
+                        if (page >= 1 && page <= pages.length) {
+                          widget.onPageDataChanged?.call(pages[page - 1]);
+                        }
+                      },
+                      itemBuilder: (context, index) {
+                        final pageNumber = 604 - index;
+                        if (pageNumber < 1 || pageNumber > pages.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final page = pages[pageNumber - 1];
+                        return _MushafPageContent(
+                          page: page,
+                          pageNumber: pageNumber,
+                          highlightVerseKey: widget.highlightVerseKey,
+                        );
+                      },
+                    ),
                   ),
                   // Page number indicator at bottom
                   Positioned(
@@ -192,7 +211,8 @@ class MushafPageViewState extends ConsumerState<MushafPageView> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 6),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withValues(alpha: 0.9),
+                            color: theme.colorScheme.surface
+                                .withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: theme.colorScheme.outlineVariant
@@ -263,9 +283,11 @@ class _MushafPageHeader extends StatelessWidget {
             // Surah name (left side in screen = right in RTL context)
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -285,9 +307,11 @@ class _MushafPageHeader extends StatelessWidget {
             // Juz name (right side in screen)
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -370,9 +394,7 @@ class _MushafPageContentState extends ConsumerState<_MushafPageContent> {
         final chapterStarts = <int, Chapter>{};
         for (final v in verses) {
           if (v.verseNumber == 1) {
-            final ch = chapters
-                .where((c) => c.id == v.chapterId)
-                .firstOrNull;
+            final ch = chapters.where((c) => c.id == v.chapterId).firstOrNull;
             if (ch != null) chapterStarts[v.chapterId] = ch;
           }
         }
@@ -409,7 +431,8 @@ class _MushafPageContentState extends ConsumerState<_MushafPageContent> {
 
         // Split verses into pre-highlight, highlight, and post-highlight groups
         // to allow placing a key on the highlighted verse for scroll targeting
-        Widget buildVerseSpans(List<Verse> verseGroup, {bool hasHighlight = false}) {
+        Widget buildVerseSpans(List<Verse> verseGroup,
+            {bool hasHighlight = false}) {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: Text.rich(
@@ -431,8 +454,10 @@ class _MushafPageContentState extends ConsumerState<_MushafPageContent> {
                       ),
                     ),
                     TextSpan(
-                      text:
-                          ' \uFD3F${toArabicNumeral(verse.verseNumber)}\uFD3E ',
+                      text: ' ${formatAyahMarker(
+                        verse.verseNumber,
+                        style: settings.ayahNumberStyle,
+                      )} ',
                       style: TextStyle(
                         fontFamily: settings.quranFont,
                         fontSize: settings.fontSize.toDouble() * 0.7,
@@ -446,6 +471,12 @@ class _MushafPageContentState extends ConsumerState<_MushafPageContent> {
                 }).toList(),
               ),
               textAlign: TextAlign.justify,
+              strutStyle: StrutStyle(
+                forceStrutHeight: true,
+                fontFamily: settings.quranFont,
+                fontSize: settings.fontSize.toDouble(),
+                height: 2.0,
+              ),
             ),
           );
         }

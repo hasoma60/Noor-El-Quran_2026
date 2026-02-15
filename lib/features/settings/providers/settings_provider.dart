@@ -12,17 +12,22 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   );
 });
 
-final settingsLocalDataSourceProvider = Provider<SettingsLocalDataSource>((ref) {
+final settingsLocalDataSourceProvider =
+    Provider<SettingsLocalDataSource>((ref) {
   return SettingsLocalDataSource(ref.watch(sharedPreferencesProvider));
 });
 
 class SettingsState {
   final int fontSize;
   final String quranFont;
+  final String scriptMode;
+  final String ayahNumberStyle;
   final String lineHeight;
   final bool showTranslation;
   final List<int> activeTranslationIds;
   final String readingViewMode;
+  final bool autoResumeLastAyah;
+  final int defaultTafsirId;
   final String theme;
   final NightModeSchedule nightModeSchedule;
   final int selectedReciterId;
@@ -32,11 +37,15 @@ class SettingsState {
 
   const SettingsState({
     this.fontSize = 28,
-    this.quranFont = 'Amiri',
+    this.quranFont = 'Hafs Smart',
+    this.scriptMode = 'madinah',
+    this.ayahNumberStyle = 'native',
     this.lineHeight = 'normal',
     this.showTranslation = true,
     this.activeTranslationIds = const [16],
     this.readingViewMode = 'flowing',
+    this.autoResumeLastAyah = true,
+    this.defaultTafsirId = 16,
     this.theme = 'system',
     this.nightModeSchedule = const NightModeSchedule(),
     this.selectedReciterId = 7,
@@ -48,10 +57,14 @@ class SettingsState {
   SettingsState copyWith({
     int? fontSize,
     String? quranFont,
+    String? scriptMode,
+    String? ayahNumberStyle,
     String? lineHeight,
     bool? showTranslation,
     List<int>? activeTranslationIds,
     String? readingViewMode,
+    bool? autoResumeLastAyah,
+    int? defaultTafsirId,
     String? theme,
     NightModeSchedule? nightModeSchedule,
     int? selectedReciterId,
@@ -62,10 +75,14 @@ class SettingsState {
     return SettingsState(
       fontSize: fontSize ?? this.fontSize,
       quranFont: quranFont ?? this.quranFont,
+      scriptMode: scriptMode ?? this.scriptMode,
+      ayahNumberStyle: ayahNumberStyle ?? this.ayahNumberStyle,
       lineHeight: lineHeight ?? this.lineHeight,
       showTranslation: showTranslation ?? this.showTranslation,
       activeTranslationIds: activeTranslationIds ?? this.activeTranslationIds,
       readingViewMode: readingViewMode ?? this.readingViewMode,
+      autoResumeLastAyah: autoResumeLastAyah ?? this.autoResumeLastAyah,
+      defaultTafsirId: defaultTafsirId ?? this.defaultTafsirId,
       theme: theme ?? this.theme,
       nightModeSchedule: nightModeSchedule ?? this.nightModeSchedule,
       selectedReciterId: selectedReciterId ?? this.selectedReciterId,
@@ -91,7 +108,9 @@ class SettingsState {
   bool get isSepia => theme == 'sepia';
   bool get isAmoled => theme == 'amoled';
   bool get isDarkScheduled =>
-      theme == 'system' && nightModeSchedule.enabled && nightModeSchedule.isNightTime;
+      theme == 'system' &&
+      nightModeSchedule.enabled &&
+      nightModeSchedule.isNightTime;
 }
 
 class SettingsNotifier extends StateNotifier<SettingsState> {
@@ -101,10 +120,14 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       : super(SettingsState(
           fontSize: _dataSource.getFontSize(),
           quranFont: _dataSource.getQuranFont(),
+          scriptMode: _dataSource.getScriptMode(),
+          ayahNumberStyle: _dataSource.getAyahNumberStyle(),
           lineHeight: _dataSource.getLineHeight(),
           showTranslation: _dataSource.getShowTranslation(),
           activeTranslationIds: _dataSource.getActiveTranslationIds(),
           readingViewMode: _dataSource.getReadingViewMode(),
+          autoResumeLastAyah: _dataSource.getAutoResumeLastAyah(),
+          defaultTafsirId: _dataSource.getDefaultTafsirId(),
           theme: _dataSource.getTheme(),
           nightModeSchedule: _dataSource.getNightModeSchedule(),
           selectedReciterId: _dataSource.getSelectedReciterId(),
@@ -121,6 +144,21 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   void setQuranFont(String font) {
     state = state.copyWith(quranFont: font);
     _dataSource.setQuranFont(font);
+  }
+
+  void setScriptMode(String mode) {
+    state = state.copyWith(scriptMode: mode);
+    _dataSource.setScriptMode(mode);
+
+    // Default to a diacritic-friendly font when strict mushaf mode is enabled.
+    if (mode == 'madinah' && state.quranFont != 'Hafs Smart') {
+      setQuranFont('Hafs Smart');
+    }
+  }
+
+  void setAyahNumberStyle(String style) {
+    state = state.copyWith(ayahNumberStyle: style);
+    _dataSource.setAyahNumberStyle(style);
   }
 
   void setLineHeight(String height) {
@@ -141,6 +179,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   void setReadingViewMode(String mode) {
     state = state.copyWith(readingViewMode: mode);
     _dataSource.setReadingViewMode(mode);
+  }
+
+  void setAutoResumeLastAyah(bool enabled) {
+    state = state.copyWith(autoResumeLastAyah: enabled);
+    _dataSource.setAutoResumeLastAyah(enabled);
+  }
+
+  void setDefaultTafsirId(int id) {
+    state = state.copyWith(defaultTafsirId: id);
+    _dataSource.setDefaultTafsirId(id);
   }
 
   void setTheme(String theme) {
@@ -174,6 +222,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 }
 
-final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
+final settingsProvider =
+    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
   return SettingsNotifier(ref.watch(settingsLocalDataSourceProvider));
 });

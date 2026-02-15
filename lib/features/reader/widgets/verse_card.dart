@@ -43,32 +43,28 @@ class VerseCard extends StatelessWidget {
     }
   }
 
-  Widget _buildVerseNumberBadge(int verseNum) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.1),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        toArabicNumeral(verseNum),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.amber[800],
-        ),
-      ),
+  TextStyle _buildAyahMarkerStyle() {
+    return TextStyle(
+      fontFamily: settings.quranFont,
+      fontSize: settings.fontSize.toDouble() * 0.62,
+      height: _lineHeight,
+      color: const Color(0xFFD97706),
+      fontWeight: FontWeight.w600,
     );
   }
 
   Widget _buildArabicText(ThemeData theme, int verseNum) {
-    final textColor = theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface;
+    final textColor =
+        theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface;
+    final marker = formatAyahMarker(
+      verseNum,
+      style: settings.ayahNumberStyle,
+    );
 
     // Word-by-word mode
-    if (settings.showWordByWord && verse.words != null && verse.words!.isNotEmpty) {
+    if (settings.showWordByWord &&
+        verse.words != null &&
+        verse.words!.isNotEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -77,19 +73,26 @@ class VerseCard extends StatelessWidget {
             fontFamily: settings.quranFont,
             fontSize: settings.fontSize.toDouble(),
             textColor: textColor,
-            translationColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            translationColor:
+                theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 8),
           Align(
-            alignment: Alignment.centerLeft,
-            child: _buildVerseNumberBadge(verseNum),
+            alignment: Alignment.centerRight,
+            child: Text(
+              marker,
+              style: _buildAyahMarkerStyle(),
+              textDirection: TextDirection.rtl,
+            ),
           ),
         ],
       );
     }
 
     // Tajweed color mode
-    if (settings.showTajweed && verse.textUthmaniTajweed != null && verse.textUthmaniTajweed!.isNotEmpty) {
+    if (settings.showTajweed &&
+        verse.textUthmaniTajweed != null &&
+        verse.textUthmaniTajweed!.isNotEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -102,8 +105,12 @@ class VerseCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Align(
-            alignment: Alignment.centerLeft,
-            child: _buildVerseNumberBadge(verseNum),
+            alignment: Alignment.centerRight,
+            child: Text(
+              marker,
+              style: _buildAyahMarkerStyle(),
+              textDirection: TextDirection.rtl,
+            ),
           ),
         ],
       );
@@ -122,15 +129,20 @@ class VerseCard extends StatelessWidget {
               color: textColor,
             ),
           ),
-          const TextSpan(text: '  '),
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: _buildVerseNumberBadge(verseNum),
+          TextSpan(
+            text: ' $marker',
+            style: _buildAyahMarkerStyle(),
           ),
         ],
       ),
       textAlign: TextAlign.right,
       textDirection: TextDirection.rtl,
+      strutStyle: StrutStyle(
+        forceStrutHeight: true,
+        fontFamily: settings.quranFont,
+        fontSize: settings.fontSize.toDouble(),
+        height: _lineHeight,
+      ),
     );
   }
 
@@ -167,12 +179,23 @@ class VerseCard extends StatelessWidget {
                 onTap: onBookmarkToggle,
                 tooltip: isBookmarked ? 'إزالة الإشارة' : 'حفظ الآية',
               ),
-              _ToolButton(icon: Icons.menu_book_outlined, onTap: onTafsir, tooltip: 'تفسير'),
-              _ToolButton(icon: Icons.share_outlined, onTap: onShare, tooltip: 'مشاركة'),
-              _ToolButton(icon: Icons.note_alt_outlined, onTap: onNote, tooltip: 'ملاحظة'),
+              _ToolButton(
+                  icon: Icons.menu_book_outlined,
+                  onTap: onTafsir,
+                  tooltip: 'تفسير'),
+              _ToolButton(
+                  icon: Icons.share_outlined,
+                  onTap: onShare,
+                  tooltip: 'مشاركة'),
+              _ToolButton(
+                  icon: Icons.note_alt_outlined,
+                  onTap: onNote,
+                  tooltip: 'ملاحظة'),
               if (onPlay != null)
                 _ToolButton(
-                  icon: isPlayingAudio ? Icons.pause_rounded : Icons.volume_up_outlined,
+                  icon: isPlayingAudio
+                      ? Icons.pause_rounded
+                      : Icons.volume_up_outlined,
                   color: isPlayingAudio ? const Color(0xFFD97706) : null,
                   onTap: onPlay!,
                   tooltip: isPlayingAudio ? 'إيقاف مؤقت' : 'تشغيل الآية',
@@ -227,7 +250,8 @@ class VerseCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 2),
-                        Icon(Icons.chevron_left, size: 14, color: Colors.amber[700]),
+                        Icon(Icons.chevron_left,
+                            size: 14, color: Colors.amber[700]),
                       ],
                     ),
                   ),

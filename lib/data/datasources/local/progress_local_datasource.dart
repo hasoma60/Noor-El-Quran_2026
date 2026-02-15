@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../domain/entities/reading_progress.dart';
 import '../../../domain/entities/quran_statistic.dart';
 import '../../../domain/entities/khatmah_plan.dart';
+import '../../../domain/entities/reader_session.dart';
 
 class ProgressLocalDataSource {
   final SharedPreferences _prefs;
@@ -46,6 +47,23 @@ class ProgressLocalDataSource {
           },
         ));
     return _prefs.setString('readingProgress', jsonEncode(map));
+  }
+
+  // ── Reader Session ──
+
+  ReaderSession? getReaderSession() {
+    final json = _prefs.getString('readerSession');
+    if (json == null) return null;
+    try {
+      final data = jsonDecode(json) as Map<String, dynamic>;
+      return ReaderSession.fromJson(data);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveReaderSession(ReaderSession session) {
+    return _prefs.setString('readerSession', jsonEncode(session.toJson()));
   }
 
   // ── Statistics ──
@@ -102,7 +120,8 @@ class ProgressLocalDataSource {
           currentDay: data['currentDay'] as int,
           dailyTarget: (data['dailyTarget'] as List<dynamic>)
               .map((t) => DailyTarget(
-                    fromVerse: (t as Map<String, dynamic>)['fromVerse'] as String,
+                    fromVerse:
+                        (t as Map<String, dynamic>)['fromVerse'] as String,
                     toVerse: t['toVerse'] as String,
                   ))
               .toList(),

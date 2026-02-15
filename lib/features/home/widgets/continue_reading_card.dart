@@ -10,27 +10,41 @@ class ContinueReadingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(progressProvider);
+    final progressState = ref.watch(progressProvider);
     final chaptersAsync = ref.watch(chaptersProvider);
     final theme = Theme.of(context);
 
     final notifier = ref.read(progressProvider.notifier);
+    final lastSession = notifier.getLastReaderSession();
     final lastRead = notifier.getLastReadChapter();
-    if (lastRead == null) return const SizedBox.shrink();
+    if (lastSession == null && lastRead == null) return const SizedBox.shrink();
+
+    final chapterId = lastSession?.chapterId ?? lastRead!.chapterId;
+    final verseKey = lastSession?.verseKey ?? lastRead!.lastVerseKey;
+    final viewMode = lastSession?.viewMode ?? 'flowing';
+    final mushafPage = lastSession?.mushafPage;
 
     return chaptersAsync.when(
       data: (chapters) {
-        final chapter = chapters.where((c) => c.id == lastRead.chapterId).firstOrNull;
+        final chapter = chapters.where((c) => c.id == chapterId).firstOrNull;
         if (chapter == null) return const SizedBox.shrink();
 
-        final progressPercent = (lastRead.versesRead / lastRead.totalVerses * 100).round();
+        final chapterProgress = progressState.progress[chapterId];
+        final progressPercent = chapterProgress == null
+            ? 0
+            : (chapterProgress.versesRead / chapterProgress.totalVerses * 100)
+                .round();
 
         return GestureDetector(
           onTap: () {
             context.pushNamed(
               'reader',
-              pathParameters: {'chapterId': lastRead.chapterId.toString()},
-              queryParameters: {'verse': lastRead.lastVerseKey},
+              pathParameters: {'chapterId': chapterId.toString()},
+              queryParameters: {
+                'verse': verseKey,
+                'mode': viewMode,
+                if (mushafPage != null) 'page': mushafPage.toString(),
+              },
             );
           },
           child: Container(
@@ -58,10 +72,11 @@ class ContinueReadingCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${chapter.nameArabic} \u2022 آية ${toArabicNumeral(int.parse(lastRead.lastVerseKey.split(':')[1]))}',
+                        '${chapter.nameArabic} \u2022 آية ${toArabicNumeral(int.parse(verseKey.split(':')[1]))}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -75,9 +90,10 @@ class ContinueReadingCard extends ConsumerWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: lastRead.versesRead / lastRead.totalVerses,
+                          value: chapterProgress?.progressPercent ?? 0,
                           backgroundColor: Colors.amber.withValues(alpha: 0.2),
-                          valueColor: const AlwaysStoppedAnimation(Color(0xFFD97706)),
+                          valueColor:
+                              const AlwaysStoppedAnimation(Color(0xFFD97706)),
                           minHeight: 6,
                         ),
                       ),
@@ -93,7 +109,8 @@ class ContinueReadingCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.amber[600]),
+                Icon(Icons.arrow_back_ios_new,
+                    size: 14, color: Colors.amber[600]),
               ],
             ),
           ),

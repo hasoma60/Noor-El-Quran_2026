@@ -16,7 +16,7 @@ const int searchMinLength = 2;
 const int fontSizeMin = 18;
 const int fontSizeMax = 48;
 const int defaultFontSize = 28;
-const String defaultFont = 'Amiri';
+const String defaultFont = 'Hafs Smart';
 const String defaultLineHeight = 'normal';
 const String defaultTheme = 'system';
 

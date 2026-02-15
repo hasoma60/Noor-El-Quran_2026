@@ -21,6 +21,7 @@ class QuranTypography {
 
   // Available Quran fonts (ordered by recommendation)
   static const List<String> quranFonts = [
+    'Hafs Smart',
     'Amiri',
     'Scheherazade New',
     'Noto Naskh Arabic',
@@ -32,13 +33,15 @@ class QuranTypography {
 
 // Tajweed color coding (Darussalam 7-color standard)
 class TajweedColors {
-  static const Color ghunnah = Color(0xFFE53E3E);      // Red - Ghunnah / Madd
-  static const Color idgham = Color(0xFF38A169);         // Green - Idgham
-  static const Color qalqalah = Color(0xFF3182CE);      // Blue - Qalqalah
-  static const Color ikhfa = Color(0xFFED8936);          // Orange - Ikhfa
-  static const Color ikhfaMeemSaakin = Color(0xFF63B3ED); // Light Blue - Ikhfa Meem
-  static const Color idghamMeemSaakin = Color(0xFF68D391); // Light Green - Idgham Meem
-  static const Color silent = Color(0xFFA0AEC0);         // Gray - Silent letters
+  static const Color ghunnah = Color(0xFFE53E3E); // Red - Ghunnah / Madd
+  static const Color idgham = Color(0xFF38A169); // Green - Idgham
+  static const Color qalqalah = Color(0xFF3182CE); // Blue - Qalqalah
+  static const Color ikhfa = Color(0xFFED8936); // Orange - Ikhfa
+  static const Color ikhfaMeemSaakin =
+      Color(0xFF63B3ED); // Light Blue - Ikhfa Meem
+  static const Color idghamMeemSaakin =
+      Color(0xFF68D391); // Light Green - Idgham Meem
+  static const Color silent = Color(0xFFA0AEC0); // Gray - Silent letters
 
   static const Map<String, Color> colorMap = {
     'ghunnah': ghunnah,

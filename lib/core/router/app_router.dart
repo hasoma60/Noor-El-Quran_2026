@@ -54,7 +54,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final chapterId = int.parse(state.pathParameters['chapterId']!);
         final verseKey = state.uri.queryParameters['verse'];
-        return ReaderScreen(chapterId: chapterId, highlightVerseKey: verseKey);
+        final page = int.tryParse(state.uri.queryParameters['page'] ?? '');
+        final mode = state.uri.queryParameters['mode'];
+        return ReaderScreen(
+          chapterId: chapterId,
+          highlightVerseKey: verseKey,
+          initialMushafPage: page,
+          initialViewMode: mode,
+        );
       },
     ),
     GoRoute(
