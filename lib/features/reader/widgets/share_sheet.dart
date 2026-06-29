@@ -21,6 +21,7 @@ class ShareSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
     final translationText = verse.translations?.firstOrNull?.text ?? '';
     final cleanTranslation = stripHtml(translationText);
     final reference = 'سورة $chapterName - الآية ${toArabicNumeral(verse.verseNumber)}';
@@ -72,9 +73,9 @@ class ShareSheet extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.06),
+                color: accent.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.15)),
+                border: Border.all(color: accent.withValues(alpha: 0.15)),
               ),
               child: Column(
                 children: [
@@ -95,7 +96,7 @@ class ShareSheet extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.amber[700],
+                      color: accent,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -154,7 +155,7 @@ class ShareSheet extends ConsumerWidget {
                 Share.share(fullText, subject: reference);
               },
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFD97706),
+                backgroundColor: accent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

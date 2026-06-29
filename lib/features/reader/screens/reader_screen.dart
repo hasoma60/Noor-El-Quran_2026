@@ -43,9 +43,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   void _scrollToVerse(String verseKey) {
     final key = _verseKeys[verseKey];
     if (key?.currentContext != null) {
+      final reducedMotion = ref.read(settingsProvider).reducedMotion;
       Scrollable.ensureVisible(
         key!.currentContext!,
-        duration: const Duration(milliseconds: 500),
+        duration: reducedMotion ? Duration.zero : const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
         alignment: 0.3,
       );
@@ -112,7 +113,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       appBar: AppBar(
         title: Text(
           chapter?.nameArabic ?? 'سورة ${toArabicNumeral(widget.chapterId)}',
-          style: const TextStyle(fontFamily: 'Amiri', fontSize: 22),
+          style: TextStyle(fontFamily: settings.quranFont, fontSize: 22),
         ),
         actions: [
           // Chapter audio play button
@@ -248,9 +249,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         Text(
           chapter?.nameArabic ?? '',
           style: TextStyle(
-            fontFamily: 'Amiri',
+            fontFamily: settings.quranFont,
             fontSize: 42,
-            color: const Color(0xFFD97706),
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
@@ -299,17 +300,18 @@ class _ChapterAudioButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final isThisChapter = audioState.currentChapterId == chapterId && audioState.currentVerseKey == null;
     final isPlaying = isThisChapter && audioState.isPlaying;
     final isLoading = isThisChapter && audioState.isLoading;
 
     if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(12),
+      return Padding(
+        padding: const EdgeInsets.all(12),
         child: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+          child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
         ),
       );
     }
@@ -318,7 +320,7 @@ class _ChapterAudioButton extends ConsumerWidget {
       onPressed: () => ref.read(audioProvider.notifier).playChapter(chapterId),
       icon: Icon(
         isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-        color: isThisChapter ? const Color(0xFFD97706) : null,
+        color: isThisChapter ? theme.colorScheme.primary : null,
       ),
       tooltip: isPlaying ? 'إيقاف مؤقت' : 'تشغيل السورة',
     );

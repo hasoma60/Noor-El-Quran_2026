@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../providers/settings_provider.dart';
 import '../widgets/reciter_selector_sheet.dart';
@@ -10,6 +11,9 @@ import '../../home/providers/bookmark_provider.dart';
 import '../../home/providers/progress_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/quran_constants.dart';
+import '../../../core/utils/arabic_utils.dart';
+import '../../../core/widgets/app_drawer.dart';
+import '../../../domain/entities/khatmah_plan.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -24,6 +28,7 @@ class SettingsScreen extends ConsumerWidget {
     final selectedReciter = reciters.where((r) => r.id == settings.selectedReciterId).firstOrNull;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('الإعدادات'),
       ),
@@ -51,7 +56,7 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('الوضع الليلي التلقائي'),
             subtitle: Text(
               settings.nightModeSchedule.enabled
-                  ? 'من ${settings.nightModeSchedule.startHour}:00 إلى ${settings.nightModeSchedule.endHour}:00'
+                  ? 'من ${toArabicNumeral(settings.nightModeSchedule.startHour)}:٠٠ إلى ${toArabicNumeral(settings.nightModeSchedule.endHour)}:٠٠'
                   : 'معطل',
             ),
             value: settings.nightModeSchedule.enabled,
@@ -75,7 +80,7 @@ class SettingsScreen extends ConsumerWidget {
                         DropdownButton<int>(
                           value: settings.nightModeSchedule.startHour,
                           isExpanded: true,
-                          items: List.generate(24, (i) => DropdownMenuItem(value: i, child: Text('$i:00'))),
+                          items: List.generate(24, (i) => DropdownMenuItem(value: i, child: Text('${toArabicNumeral(i)}:٠٠'))),
                           onChanged: (v) {
                             if (v != null) {
                               notifier.setNightModeSchedule(
@@ -96,7 +101,7 @@ class SettingsScreen extends ConsumerWidget {
                         DropdownButton<int>(
                           value: settings.nightModeSchedule.endHour,
                           isExpanded: true,
-                          items: List.generate(24, (i) => DropdownMenuItem(value: i, child: Text('$i:00'))),
+                          items: List.generate(24, (i) => DropdownMenuItem(value: i, child: Text('${toArabicNumeral(i)}:٠٠'))),
                           onChanged: (v) {
                             if (v != null) {
                               notifier.setNightModeSchedule(
@@ -116,7 +121,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Font size
-          _SectionTitle(title: 'حجم الخط: ${settings.fontSize}', theme: theme),
+          _SectionTitle(title: 'حجم الخط: ${toArabicNumeral(settings.fontSize)}', theme: theme),
           Slider(
             value: settings.fontSize.toDouble(),
             min: fontSizeMin.toDouble(),
@@ -149,10 +154,15 @@ class SettingsScreen extends ConsumerWidget {
           // Quran font
           _SectionTitle(title: 'خط القرآن', theme: theme),
           const SizedBox(height: 8),
-          ...['Amiri', 'Scheherazade New', 'Noto Naskh Arabic', 'Lateef'].map(
-            (font) => RadioListTile<String>(
-              title: Text(font, style: TextStyle(fontFamily: font, fontSize: 18)),
-              value: font,
+          ...quranFontOptions.map(
+            (option) => RadioListTile<String>(
+              title: Text(option.label),
+              subtitle: Text(
+                'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ',
+                style: TextStyle(fontFamily: option.family, fontSize: 20),
+                textDirection: TextDirection.rtl,
+              ),
+              value: option.family,
               groupValue: settings.quranFont,
               onChanged: (v) => notifier.setQuranFont(v!),
             ),
@@ -191,7 +201,7 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             tileColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            leading: const Icon(Icons.person, color: Color(0xFFD97706)),
+            leading: Icon(Icons.person, color: theme.colorScheme.primary),
             title: Text(selectedReciter?.nameArabic ?? 'مشاري راشد العفاسي'),
             subtitle: Text(
               selectedReciter != null ? '${selectedReciter.name} - ${selectedReciter.style}' : '',
@@ -314,11 +324,26 @@ class SettingsScreen extends ConsumerWidget {
           'startDate': p.startDate,
           'completedDays': p.completedDays,
           'currentDay': p.currentDay,
+          'dailyTarget': p.dailyTarget
+              .map((t) => {'fromVerse': t.fromVerse, 'toVerse': t.toVerse})
+              .toList(),
         }).toList(),
       };
 
       final jsonStr = const JsonEncoder.withIndent('  ').convert(exportData);
-      await Share.share(jsonStr, subject: 'نور القرآن - نسخة احتياطية');
+
+      // Write to a real .json file and share that, so the backup can be
+      // re-imported via the file picker (sharing plain text could not be).
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/noor_quran_backup_${DateTime.now().millisecondsSinceEpoch}.json',
+      );
+      await file.writeAsString(jsonStr);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/json')],
+        subject: 'نور القرآن - نسخة احتياطية',
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -372,10 +397,48 @@ class SettingsScreen extends ConsumerWidget {
         bookmarkNotifier.importNote(nm);
       }
 
+      // Import khatmah plans (merge new ones by id)
+      final plansJson = data['khatmahPlans'] as List<dynamic>? ?? [];
+      var importedPlans = 0;
+      if (plansJson.isNotEmpty) {
+        final dataSource = ref.read(progressLocalDataSourceProvider);
+        final existing = ref.read(progressProvider).khatmahPlans;
+        final existingIds = existing.map((p) => p.id).toSet();
+        final toAdd = <KhatmahPlan>[];
+        for (final p in plansJson) {
+          final pm = p as Map<String, dynamic>;
+          final id = pm['id'] as String?;
+          if (id == null || existingIds.contains(id)) continue;
+          toAdd.add(KhatmahPlan(
+            id: id,
+            name: pm['name'] as String? ?? 'خطة',
+            totalDays: pm['totalDays'] as int? ?? 30,
+            startDate: pm['startDate'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+            completedDays: (pm['completedDays'] as Map<String, dynamic>? ?? {})
+                .map((k, v) => MapEntry(k, v as bool)),
+            currentDay: pm['currentDay'] as int? ?? 0,
+            dailyTarget: ((pm['dailyTarget'] as List<dynamic>?) ?? [])
+                .map((t) => DailyTarget(
+                      fromVerse: (t as Map<String, dynamic>)['fromVerse']?.toString() ?? '1',
+                      toVerse: t['toVerse']?.toString() ?? '1',
+                    ))
+                .toList(),
+          ));
+        }
+        if (toAdd.isNotEmpty) {
+          await dataSource.saveKhatmahPlans([...existing, ...toAdd]);
+          ref.invalidate(progressProvider);
+          importedPlans = toAdd.length;
+        }
+      }
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم استيراد ${bookmarks.length} إشارة و ${notes.length} ملاحظة'),
+            content: Text(
+              'تم استيراد ${toArabicNumeral(bookmarks.length)} إشارة و ${toArabicNumeral(notes.length)} ملاحظة'
+              '${importedPlans > 0 ? ' و ${toArabicNumeral(importedPlans)} خطة' : ''}',
+            ),
           ),
         );
       }

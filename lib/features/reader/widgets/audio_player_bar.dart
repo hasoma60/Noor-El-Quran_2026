@@ -37,10 +37,10 @@ class AudioPlayerBar extends ConsumerWidget {
               trackHeight: 3,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: const Color(0xFFD97706),
+              activeTrackColor: theme.colorScheme.primary,
               inactiveTrackColor: theme.colorScheme.surfaceContainerHighest,
-              thumbColor: const Color(0xFFD97706),
-              overlayColor: const Color(0xFFD97706).withValues(alpha: 0.15),
+              thumbColor: theme.colorScheme.primary,
+              overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
             ),
             child: Slider(
               value: audioState.progress,
@@ -117,15 +117,16 @@ class _PlayPauseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = Theme.of(context).colorScheme.primary;
     if (audioState.isLoading) {
-      return const SizedBox(
+      return SizedBox(
         width: 40,
         height: 40,
         child: Padding(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           child: CircularProgressIndicator(
             strokeWidth: 2.5,
-            color: Color(0xFFD97706),
+            color: accent,
           ),
         ),
       );
@@ -139,8 +140,8 @@ class _PlayPauseButton extends StatelessWidget {
       ),
       tooltip: audioState.isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
       style: IconButton.styleFrom(
-        foregroundColor: const Color(0xFFD97706),
-        backgroundColor: const Color(0xFFD97706).withValues(alpha: 0.1),
+        foregroundColor: accent,
+        backgroundColor: accent.withValues(alpha: 0.1),
       ),
     );
   }
@@ -164,13 +165,13 @@ class _SpeedButton extends StatelessWidget {
           value: speed,
           child: Row(
             children: [
-              if (isSelected) const Icon(Icons.check, size: 16, color: Color(0xFFD97706)),
+              if (isSelected) Icon(Icons.check, size: 16, color: theme.colorScheme.primary),
               if (isSelected) const SizedBox(width: 8),
               Text(
                 '${speed}x',
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.bold : null,
-                  color: isSelected ? const Color(0xFFD97706) : null,
+                  color: isSelected ? theme.colorScheme.primary : null,
                 ),
               ),
             ],
@@ -214,13 +215,13 @@ class _RepeatButton extends StatelessWidget {
           value: count,
           child: Row(
             children: [
-              if (isSelected) const Icon(Icons.check, size: 16, color: Color(0xFFD97706)),
+              if (isSelected) Icon(Icons.check, size: 16, color: theme.colorScheme.primary),
               if (isSelected) const SizedBox(width: 8),
               Text(
                 count == 1 ? 'بدون تكرار' : '${toArabicNumeral(count)} مرات',
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.bold : null,
-                  color: isSelected ? const Color(0xFFD97706) : null,
+                  color: isSelected ? theme.colorScheme.primary : null,
                 ),
               ),
             ],
@@ -232,7 +233,7 @@ class _RepeatButton extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: audioState.repeatCount > 1
-              ? const Color(0xFFD97706).withValues(alpha: 0.1)
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
               : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         ),
         child: Row(
@@ -242,17 +243,17 @@ class _RepeatButton extends StatelessWidget {
               Icons.repeat,
               size: 14,
               color: audioState.repeatCount > 1
-                  ? const Color(0xFFD97706)
+                  ? theme.colorScheme.primary
                   : theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             if (audioState.repeatCount > 1) ...[
               const SizedBox(width: 2),
               Text(
                 toArabicNumeral(audioState.repeatCount),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFD97706),
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ],

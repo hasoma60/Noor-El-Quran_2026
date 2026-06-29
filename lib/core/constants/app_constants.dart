@@ -10,17 +10,24 @@ const int versesPerPage = 300;
 const int searchDebounceMs = 600;
 const int searchMinLength = 2;
 
-const int fontSizeMin = 24;
+const int fontSizeMin = 20;
 const int fontSizeMax = 60;
 const int defaultFontSize = 32;
 const String defaultFont = 'KFGQPC Uthmanic Script HAFS';
 const String defaultLineHeight = 'normal';
-const String defaultTheme = 'system';
 
-// Line Heights (optimized for Arabic script)
-const double quranLineHeight = 2.0;       // 1.8-2.2 for diacritics
-const double translationLineHeight = 1.6;  // 1.5-1.7
-const double uiLineHeight = 1.3;           // 1.2-1.4
+/// Quran reading fonts offered in Settings, with their Arabic display labels.
+/// The family name is what `settings.quranFont` stores; the label is shown in
+/// the UI because some families (e.g. KFGQPC) have no Latin glyphs to render
+/// their own Latin name.
+const List<({String family, String label})> quranFontOptions = [
+  (family: 'KFGQPC Uthmanic Script HAFS', label: 'مصحف المدينة (حفص)'),
+  (family: 'Amiri', label: 'أميري'),
+  (family: 'Scheherazade New', label: 'شهرزاد'),
+  (family: 'Noto Naskh Arabic', label: 'نسخ'),
+  (family: 'Lateef', label: 'لطيف'),
+];
+const String defaultTheme = 'system';
 
 // Cache TTLs in milliseconds
 const int chapterCacheTtl = 60 * 60 * 1000; // 1 hour

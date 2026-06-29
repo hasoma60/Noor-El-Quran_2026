@@ -41,10 +41,10 @@ class _KhatmahScreenState extends ConsumerState<KhatmahScreen> {
                 children: [7, 14, 30, 60].map((days) {
                   final selected = selectedDays == days;
                   return ChoiceChip(
-                    label: Text('$days يوم'),
+                    label: Text('${toArabicNumeral(days)} يوم'),
                     selected: selected,
                     onSelected: (_) => setDialogState(() => selectedDays = days),
-                    selectedColor: const Color(0xFFD97706),
+                    selectedColor: Theme.of(context).colorScheme.primary,
                     labelStyle: TextStyle(
                       color: selected ? Colors.white : null,
                       fontWeight: selected ? FontWeight.bold : null,
@@ -55,7 +55,7 @@ class _KhatmahScreenState extends ConsumerState<KhatmahScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'حوالي ${(6236 / selectedDays).ceil()} آية يوميًا',
+                'حوالي ${toArabicNumeral((6236 / selectedDays).ceil())} آية يوميًا',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
@@ -75,7 +75,7 @@ class _KhatmahScreenState extends ConsumerState<KhatmahScreen> {
                 _createPlan(name, selectedDays);
                 Navigator.pop(ctx);
               },
-              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFD97706)),
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
               child: const Text('إنشاء'),
             ),
           ],
@@ -185,8 +185,8 @@ class _KhatmahScreenState extends ConsumerState<KhatmahScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateDialog,
-        backgroundColor: const Color(0xFFD97706),
-        foregroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         icon: const Icon(Icons.add),
         label: const Text('خطة جديدة'),
       ),
@@ -277,7 +277,7 @@ class _KhatmahPlanCardState extends State<_KhatmahPlanCard> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.amber[700],
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                     const Spacer(),
@@ -297,7 +297,7 @@ class _KhatmahPlanCardState extends State<_KhatmahPlanCard> {
                     value: progress.clamp(0.0, 1.0),
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation(
-                      progress >= 1.0 ? Colors.green : const Color(0xFFD97706),
+                      progress >= 1.0 ? Colors.green : theme.colorScheme.primary,
                     ),
                     minHeight: 8,
                   ),
@@ -308,7 +308,7 @@ class _KhatmahPlanCardState extends State<_KhatmahPlanCard> {
                     Text(
                       progress >= 1.0
                           ? 'مكتملة! ✓'
-                          : '${(progress * 100).round()}% مكتمل',
+                          : '${toArabicNumeral((progress * 100).round())}% مكتمل',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: progress >= 1.0 ? FontWeight.bold : null,

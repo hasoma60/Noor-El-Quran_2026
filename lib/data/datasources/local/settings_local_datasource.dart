@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../domain/entities/night_mode_schedule.dart';
 
 class SettingsLocalDataSource {
@@ -12,7 +13,7 @@ class SettingsLocalDataSource {
   Future<void> setFontSize(int size) => _prefs.setInt('fontSize', size);
 
   // Quran font
-  String getQuranFont() => _prefs.getString('quranFont') ?? 'Amiri';
+  String getQuranFont() => _prefs.getString('quranFont') ?? defaultFont;
   Future<void> setQuranFont(String font) => _prefs.setString('quranFont', font);
 
   // Line height

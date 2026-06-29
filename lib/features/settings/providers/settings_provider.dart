@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../data/datasources/local/settings_local_datasource.dart';
 import '../../../domain/entities/night_mode_schedule.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,7 +27,7 @@ class SettingsState {
 
   const SettingsState({
     this.fontSize = 32,
-    this.quranFont = 'Amiri',
+    this.quranFont = defaultFont,
     this.lineHeight = 'normal',
     this.showTranslation = true,
     this.activeTranslationIds = const [16],

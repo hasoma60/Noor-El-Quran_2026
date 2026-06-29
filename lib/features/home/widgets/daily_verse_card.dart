@@ -17,6 +17,7 @@ class DailyVerseCard extends ConsumerWidget {
     final dailyVerse = ref.watch(dailyVerseProvider);
     final settings = ref.watch(settingsProvider);
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
 
     return dailyVerse.when(
       data: (data) {
@@ -34,13 +35,13 @@ class DailyVerseCard extends ConsumerWidget {
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
               colors: [
-                Colors.amber.withValues(alpha: 0.08),
-                Colors.amber.withValues(alpha: 0.03),
+                accent.withValues(alpha: 0.08),
+                accent.withValues(alpha: 0.03),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.amber.withValues(alpha: 0.2),
+              color: accent.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -49,19 +50,19 @@ class DailyVerseCard extends ConsumerWidget {
               // Header
               Row(
                 children: [
-                  Icon(Icons.auto_awesome, size: 16, color: Colors.amber[700]),
+                  Icon(Icons.auto_awesome, size: 16, color: accent),
                   const SizedBox(width: 6),
                   Text(
                     'آية اليوم',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Colors.amber[700],
+                      color: accent,
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: Icon(Icons.copy, size: 16, color: Colors.amber[600]?.withValues(alpha: 0.6)),
+                    icon: Icon(Icons.copy, size: 16, color: accent.withValues(alpha: 0.6)),
                     onPressed: () {
                       final text = '${verse.textUthmani}\n\n- سورة ${chapter.nameArabic} (${verse.verseKey})';
                       Clipboard.setData(ClipboardData(text: text));
@@ -73,7 +74,7 @@ class DailyVerseCard extends ConsumerWidget {
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
                   IconButton(
-                    icon: Icon(Icons.share, size: 16, color: Colors.amber[600]?.withValues(alpha: 0.6)),
+                    icon: Icon(Icons.share, size: 16, color: accent.withValues(alpha: 0.6)),
                     onPressed: () {
                       final text = '${verse.textUthmani}\n\n- سورة ${chapter.nameArabic} (${verse.verseKey})';
                       Share.share(text);
@@ -128,7 +129,7 @@ class DailyVerseCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.amber[700],
+                        color: accent,
                       ),
                     ),
                   ],
@@ -139,12 +140,12 @@ class DailyVerseCard extends ConsumerWidget {
         );
       },
       loading: () => Shimmer.fromColors(
-        baseColor: Colors.amber.withValues(alpha: 0.1),
-        highlightColor: Colors.amber.withValues(alpha: 0.2),
+        baseColor: accent.withValues(alpha: 0.10),
+        highlightColor: accent.withValues(alpha: 0.20),
         child: Container(
           height: 160,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
           ),
         ),

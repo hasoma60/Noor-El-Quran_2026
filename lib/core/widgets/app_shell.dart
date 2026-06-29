@@ -89,7 +89,7 @@ class _MiniAudioPlayer extends ConsumerWidget {
           LinearProgressIndicator(
             value: audioState.progress,
             backgroundColor: Colors.transparent,
-            valueColor: const AlwaysStoppedAnimation(Color(0xFFD97706)),
+            valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
             minHeight: 2,
           ),
 
@@ -102,7 +102,7 @@ class _MiniAudioPlayer extends ConsumerWidget {
                 Icon(
                   Icons.music_note,
                   size: 16,
-                  color: const Color(0xFFD97706),
+                  color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
 
@@ -128,15 +128,15 @@ class _MiniAudioPlayer extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(4),
                     child: audioState.isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706)),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
                           )
                         : Icon(
                             audioState.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                             size: 24,
-                            color: const Color(0xFFD97706),
+                            color: theme.colorScheme.primary,
                           ),
                   ),
                 ),

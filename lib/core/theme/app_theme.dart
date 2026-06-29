@@ -14,7 +14,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -62,7 +62,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 1,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -122,7 +122,7 @@ class AppTheme {
         backgroundColor: SepiaColors.surface,
         foregroundColor: SepiaColors.textPrimary,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: SepiaColors.surface,
         shape: RoundedRectangleBorder(
@@ -173,67 +173,12 @@ class AppTheme {
     );
   }
 
-  /// True black AMOLED theme for power savings on OLED screens
-  static ThemeData amoled() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      fontFamily: 'Cairo',
-      colorSchemeSeed: appAccentColor,
-      scaffoldBackgroundColor: const Color(0xFF000000), // True black
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Color(0xFF000000),
-      ),
-      cardTheme: CardTheme(
-        elevation: 0,
-        color: const Color(0xFF0A0A0A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF1F1F1F)),
-        ),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Color(0xFF000000),
-        selectedItemColor: appAccentColorLight,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFF0A0A0A),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF1F1F1F)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF1F1F1F)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: appAccentColorLight, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-      chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-      ),
-      dividerColor: const Color(0xFF1F1F1F),
-    );
-  }
-
   static ThemeData getTheme(String themeMode) {
     switch (themeMode) {
       case 'dark':
         return dark();
       case 'sepia':
         return sepia();
-      case 'amoled':
-        return amoled();
       case 'light':
       default:
         return light();

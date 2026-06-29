@@ -28,6 +28,7 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
     final settings = ref.watch(settingsProvider);
 
     final tafsirAsync = ref.watch(tafsirContentProvider(
@@ -104,7 +105,7 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
                   label: Text(option.name, style: TextStyle(fontSize: 12)),
                   selected: selected,
                   onSelected: (_) => setState(() => _selectedTafsirId = option.id),
-                  selectedColor: const Color(0xFFD97706),
+                  selectedColor: accent,
                   labelStyle: TextStyle(
                     color: selected ? Colors.white : null,
                     fontWeight: selected ? FontWeight.bold : FontWeight.normal,
@@ -129,9 +130,9 @@ class _TafsirSheetState extends ConsumerState<TafsirSheet> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.06),
+                      color: accent.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.amber.withValues(alpha: 0.15)),
+                      border: Border.all(color: accent.withValues(alpha: 0.15)),
                     ),
                     child: Text(
                       widget.verse.textUthmani,

@@ -40,6 +40,7 @@ class _NoteSheetState extends State<NoteSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -89,7 +90,7 @@ class _NoteSheetState extends State<NoteSheet> {
               'سورة ${widget.chapterName} \u2022 آية ${toArabicNumeral(widget.verse.verseNumber)}',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.amber[700],
+                color: accent,
               ),
             ),
 
@@ -118,7 +119,7 @@ class _NoteSheetState extends State<NoteSheet> {
                 }
               },
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFD97706),
+                backgroundColor: accent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

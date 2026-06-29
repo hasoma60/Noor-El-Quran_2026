@@ -15,6 +15,7 @@ class ReciterSelectorSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -58,14 +59,14 @@ class ReciterSelectorSheet extends StatelessWidget {
                 return ListTile(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   selected: isSelected,
-                  selectedTileColor: const Color(0xFFD97706).withValues(alpha: 0.08),
+                  selectedTileColor: accent.withValues(alpha: 0.08),
                   leading: CircleAvatar(
                     backgroundColor: isSelected
-                        ? const Color(0xFFD97706).withValues(alpha: 0.15)
+                        ? accent.withValues(alpha: 0.15)
                         : theme.colorScheme.surfaceContainerHighest,
                     child: Icon(
                       Icons.person,
-                      color: isSelected ? const Color(0xFFD97706) : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      color: isSelected ? accent : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                       size: 20,
                     ),
                   ),
@@ -73,7 +74,7 @@ class ReciterSelectorSheet extends StatelessWidget {
                     reciter.nameArabic,
                     style: TextStyle(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? const Color(0xFFD97706) : null,
+                      color: isSelected ? accent : null,
                     ),
                   ),
                   subtitle: Text(
@@ -84,7 +85,7 @@ class ReciterSelectorSheet extends StatelessWidget {
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(Icons.check_circle, color: Color(0xFFD97706), size: 22)
+                      ? Icon(Icons.check_circle, color: accent, size: 22)
                       : null,
                   onTap: () {
                     onReciterSelected(reciter.id);

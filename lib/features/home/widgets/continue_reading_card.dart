@@ -13,6 +13,7 @@ class ContinueReadingCard extends ConsumerWidget {
     ref.watch(progressProvider);
     final chaptersAsync = ref.watch(chaptersProvider);
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
 
     final notifier = ref.read(progressProvider.notifier);
     final lastRead = notifier.getLastReadChapter();
@@ -36,10 +37,10 @@ class ContinueReadingCard extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.08),
+              color: accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.amber.withValues(alpha: 0.2),
+                color: accent.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -53,7 +54,7 @@ class ContinueReadingCard extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Colors.amber[700],
+                          color: accent,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -76,24 +77,24 @@ class ContinueReadingCard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: lastRead.versesRead / lastRead.totalVerses,
-                          backgroundColor: Colors.amber.withValues(alpha: 0.2),
-                          valueColor: const AlwaysStoppedAnimation(Color(0xFFD97706)),
+                          backgroundColor: accent.withValues(alpha: 0.2),
+                          valueColor: AlwaysStoppedAnimation(accent),
                           minHeight: 6,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$progressPercent%',
+                        '${toArabicNumeral(progressPercent)}%',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.amber[700],
+                          color: accent,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.amber[600]),
+                Icon(Icons.arrow_back_ios_new, size: 14, color: accent),
               ],
             ),
           ),

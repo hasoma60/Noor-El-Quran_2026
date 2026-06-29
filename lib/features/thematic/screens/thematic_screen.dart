@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../home/providers/chapters_provider.dart';
 import '../../../core/constants/quran_constants.dart';
 import '../../../core/utils/arabic_utils.dart';
 
@@ -100,7 +102,7 @@ class ThematicScreen extends StatelessWidget {
 }
 
 /// Screen showing verses for a specific thematic topic
-class _ThematicVersesScreen extends StatelessWidget {
+class _ThematicVersesScreen extends ConsumerWidget {
   final String topicName;
   final String topicDescription;
   final IconData icon;
@@ -114,8 +116,13 @@ class _ThematicVersesScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final chapters = ref.watch(chaptersProvider).valueOrNull;
+    String chapterName(int id) =>
+        chapters?.where((c) => c.id == id).firstOrNull?.nameArabic ??
+        'سورة ${toArabicNumeral(id)}';
 
     return Scaffold(
       appBar: AppBar(
@@ -149,7 +156,7 @@ class _ThematicVersesScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.amber[700],
+                    color: accent,
                   ),
                 ),
               ],
@@ -174,9 +181,9 @@ class _ThematicVersesScreen extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.1),
+                      color: accent.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                      border: Border.all(color: accent.withValues(alpha: 0.3)),
                     ),
                     alignment: Alignment.center,
                     child: Text(
@@ -184,25 +191,18 @@ class _ThematicVersesScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.amber[800],
+                        color: accent,
                       ),
                     ),
                   ),
                   title: Text(
-                    'سورة ${toArabicNumeral(chapterId)} - الآية ${toArabicNumeral(int.tryParse(verseNum) ?? 1)}',
+                    '${chapterName(chapterId)} • الآية ${toArabicNumeral(int.tryParse(verseNum) ?? 1)}',
                     style: const TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                     textDirection: TextDirection.rtl,
-                  ),
-                  subtitle: Text(
-                    verseKey,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
                   ),
                   trailing: Icon(
                     Icons.chevron_left,

@@ -44,21 +44,24 @@ class VerseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
     final verseNum = verse.verseNumber;
     final translationText = verse.translations?.firstOrNull?.text ?? '';
     final cleanTranslation = stripHtml(translationText);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
+      duration: settings.reducedMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 500),
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       decoration: BoxDecoration(
         color: isHighlighted
-            ? Colors.amber.withValues(alpha: 0.08)
+            ? accent.withValues(alpha: 0.08)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(20),
         border: isHighlighted
-            ? Border.all(color: Colors.amber.withValues(alpha: 0.3))
+            ? Border.all(color: accent.withValues(alpha: 0.3))
             : null,
       ),
       child: Column(
@@ -70,7 +73,7 @@ class VerseCard extends StatelessWidget {
             children: [
               _ToolButton(
                 icon: isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                color: isBookmarked ? const Color(0xFFD97706) : null,
+                color: isBookmarked ? accent : null,
                 onTap: onBookmarkToggle,
                 tooltip: isBookmarked ? 'إزالة الإشارة' : 'حفظ الآية',
               ),
@@ -80,7 +83,7 @@ class VerseCard extends StatelessWidget {
               if (onPlay != null)
                 _ToolButton(
                   icon: isPlayingAudio ? Icons.pause_rounded : Icons.volume_up_outlined,
-                  color: isPlayingAudio ? const Color(0xFFD97706) : null,
+                  color: isPlayingAudio ? accent : null,
                   onTap: onPlay!,
                   tooltip: isPlayingAudio ? 'إيقاف مؤقت' : 'تشغيل الآية',
                 ),
@@ -109,9 +112,9 @@ class VerseCard extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
+                        color: accent.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                        border: Border.all(color: accent.withValues(alpha: 0.3)),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -119,7 +122,7 @@ class VerseCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.amber[800],
+                          color: accent,
                         ),
                       ),
                     ),
@@ -139,7 +142,7 @@ class VerseCard extends StatelessWidget {
               decoration: BoxDecoration(
                 border: BorderDirectional(
                   start: BorderSide(
-                    color: Colors.amber.withValues(alpha: 0.3),
+                    color: accent.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -168,11 +171,11 @@ class VerseCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.amber[700],
+                            color: accent,
                           ),
                         ),
                         const SizedBox(width: 2),
-                        Icon(Icons.chevron_left, size: 14, color: Colors.amber[700]),
+                        Icon(Icons.chevron_left, size: 14, color: accent),
                       ],
                     ),
                   ),

@@ -18,13 +18,33 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
   int? _selectedChapterId;
   int _fromVerse = 1;
   int _toVerse = 7;
+  int _chapterVerseCount = 0;
   bool _started = false;
   final Set<int> _hiddenWordIndices = {};
   bool _showAll = false;
   int _score = 0;
   int _total = 0;
 
+  // Persistent controllers (recreating these in build() caused the cursor to
+  // jump and multi-digit entry to fail).
+  final TextEditingController _fromController = TextEditingController(text: '1');
+  final TextEditingController _toController = TextEditingController(text: '7');
+
+  @override
+  void dispose() {
+    _fromController.dispose();
+    _toController.dispose();
+    super.dispose();
+  }
+
+  bool get _isRangeValid =>
+      _selectedChapterId != null &&
+      _fromVerse >= 1 &&
+      _toVerse >= _fromVerse &&
+      _toVerse <= _chapterVerseCount;
+
   void _startMemorization() {
+    if (!_isRangeValid) return;
     setState(() {
       _started = true;
       _hiddenWordIndices.clear();
@@ -81,8 +101,11 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                 final ch = chapters.firstWhere((c) => c.id == id);
                 setState(() {
                   _selectedChapterId = id;
+                  _chapterVerseCount = ch.versesCount;
                   _fromVerse = 1;
                   _toVerse = ch.versesCount.clamp(1, 10);
+                  _fromController.text = '$_fromVerse';
+                  _toController.text = '$_toVerse';
                 });
               },
             ),
@@ -97,10 +120,10 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                     child: TextField(
                       decoration: const InputDecoration(labelText: 'من الآية'),
                       keyboardType: TextInputType.number,
-                      controller: TextEditingController(text: '$_fromVerse'),
+                      controller: _fromController,
                       onChanged: (v) {
                         final n = int.tryParse(v);
-                        if (n != null && n > 0) setState(() => _fromVerse = n);
+                        if (n != null) setState(() => _fromVerse = n);
                       },
                     ),
                   ),
@@ -109,22 +132,34 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                     child: TextField(
                       decoration: const InputDecoration(labelText: 'إلى الآية'),
                       keyboardType: TextInputType.number,
-                      controller: TextEditingController(text: '$_toVerse'),
+                      controller: _toController,
                       onChanged: (v) {
                         final n = int.tryParse(v);
-                        if (n != null && n > 0) setState(() => _toVerse = n);
+                        if (n != null) setState(() => _toVerse = n);
                       },
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              Text(
+                _isRangeValid
+                    ? 'السورة بها ${toArabicNumeral(_chapterVerseCount)} آية'
+                    : 'أدخل نطاقًا صحيحًا (١ - ${toArabicNumeral(_chapterVerseCount)})',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _isRangeValid
+                      ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+                      : theme.colorScheme.error,
+                ),
+              ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('بدء المراجعة'),
-                onPressed: _startMemorization,
+                onPressed: _isRangeValid ? _startMemorization : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD97706),
+                  backgroundColor: theme.colorScheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -141,6 +176,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
   Widget _buildMemorizationView(SettingsState settings, ThemeData theme) {
     if (_selectedChapterId == null) return const SizedBox.shrink();
 
+    final accent = theme.colorScheme.primary;
     final versesAsync = ref.watch(versesProvider(_selectedChapterId!));
     final audioState = ref.watch(audioProvider);
 
@@ -208,12 +244,12 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.1),
+                                color: accent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'الآية ${toArabicNumeral(verse.verseNumber)}',
-                                style: TextStyle(fontSize: 12, color: Colors.amber[700], fontWeight: FontWeight.w600),
+                                style: TextStyle(fontSize: 12, color: accent, fontWeight: FontWeight.w600),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -230,7 +266,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: isCurrentVerse && audioState.isPlaying
-                                      ? const Color(0xFFD97706).withValues(alpha: 0.15)
+                                      ? accent.withValues(alpha: 0.15)
                                       : Colors.transparent,
                                   shape: BoxShape.circle,
                                 ),
@@ -240,7 +276,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                                       : Icons.volume_up_outlined,
                                   size: 18,
                                   color: isCurrentVerse && audioState.isPlaying
-                                      ? const Color(0xFFD97706)
+                                      ? accent
                                       : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                                 ),
                               ),
@@ -268,11 +304,11 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: isHidden
-                                      ? Colors.amber.withValues(alpha: 0.15)
+                                      ? accent.withValues(alpha: 0.15)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   border: isHidden
-                                      ? Border.all(color: Colors.amber.withValues(alpha: 0.3), style: BorderStyle.solid)
+                                      ? Border.all(color: accent.withValues(alpha: 0.3), style: BorderStyle.solid)
                                       : null,
                                 ),
                                 child: Text(
@@ -282,7 +318,7 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                                     fontSize: settings.fontSize.toDouble() * 0.8,
                                     height: 1.8,
                                     color: isHidden
-                                        ? Colors.amber[700]
+                                        ? accent
                                         : theme.textTheme.bodyLarge?.color,
                                   ),
                                   textDirection: TextDirection.rtl,
@@ -310,10 +346,10 @@ class _MemorizationScreenState extends ConsumerState<MemorizationScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'النتيجة: ${toArabicNumeral(_score)} / ${toArabicNumeral(_total)}',
+                      'الكلمات المكشوفة: ${toArabicNumeral(_score)} / ${toArabicNumeral(_total)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.amber[700],
+                        color: accent,
                       ),
                     ),
                     if (_score == _total && _total > 0) ...[

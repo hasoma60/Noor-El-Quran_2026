@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/chapters_provider.dart';
 import '../providers/progress_provider.dart';
+import '../../settings/providers/settings_provider.dart';
 import '../widgets/daily_verse_card.dart';
 import '../widgets/continue_reading_card.dart';
 import '../widgets/chapter_skeleton.dart';
 import '../../../core/widgets/error_widget.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/utils/arabic_utils.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -43,26 +45,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('نور القرآن'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart_outlined),
-            tooltip: 'الإحصائيات',
-            onPressed: () => context.pushNamed('stats'),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (route) => context.pushNamed(route),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'juz', child: Text('فهرس الأجزاء')),
-              PopupMenuItem(value: 'khatmah', child: Text('خطة الختمة')),
-              PopupMenuItem(value: 'notes', child: Text('الملاحظات')),
-              PopupMenuItem(value: 'memorization', child: Text('المراجعة والحفظ')),
-              PopupMenuItem(value: 'thematic', child: Text('الفهرس الموضوعي')),
-            ],
-          ),
-        ],
       ),
       body: chaptersAsync.when(
         data: (chapters) {
@@ -169,6 +154,8 @@ class _ChapterTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final settings = ref.watch(settingsProvider);
     final progressState = ref.watch(progressProvider);
     final progress = progressState.progress[chapter.id];
     final progressPercent = progress != null
@@ -207,7 +194,7 @@ class _ChapterTile extends ConsumerWidget {
                           valueColor: AlwaysStoppedAnimation(
                             progressPercent >= 100
                                 ? Colors.green
-                                : const Color(0xFFD97706),
+                                : accent,
                           ),
                         ),
                       Container(
@@ -217,7 +204,7 @@ class _ChapterTile extends ConsumerWidget {
                           color: progressPercent >= 100
                               ? Colors.green.withValues(alpha: 0.1)
                               : progressPercent > 0
-                                  ? Colors.amber.withValues(alpha: 0.1)
+                                  ? accent.withValues(alpha: 0.1)
                                   : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                         ),
@@ -230,7 +217,7 @@ class _ChapterTile extends ConsumerWidget {
                             color: progressPercent >= 100
                                 ? Colors.green[700]
                                 : progressPercent > 0
-                                    ? Colors.amber[800]
+                                    ? accent
                                     : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
@@ -247,8 +234,8 @@ class _ChapterTile extends ConsumerWidget {
                     children: [
                       Text(
                         chapter.nameArabic,
-                        style: const TextStyle(
-                          fontFamily: 'Amiri',
+                        style: TextStyle(
+                          fontFamily: settings.quranFont,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),

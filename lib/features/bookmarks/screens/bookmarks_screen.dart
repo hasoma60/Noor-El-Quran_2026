@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../home/providers/bookmark_provider.dart';
+import '../../settings/providers/settings_provider.dart';
 import '../../../core/constants/quran_constants.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/arabic_utils.dart';
 import '../../../core/widgets/empty_state_widget.dart';
+import '../../../core/widgets/app_drawer.dart';
 
 class BookmarksScreen extends ConsumerStatefulWidget {
   const BookmarksScreen({super.key});
@@ -22,12 +24,15 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
     final bookmarkState = ref.watch(bookmarkProvider);
     final notifier = ref.read(bookmarkProvider.notifier);
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final settings = ref.watch(settingsProvider);
 
     final allBookmarks = _selectedCategory == 'all'
         ? bookmarkState.bookmarks
         : notifier.getBookmarksByCategory(_selectedCategory);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('المفضلة'),
       ),
@@ -140,7 +145,7 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.amber[700],
+                                          color: accent,
                                         ),
                                       ),
                                       const Spacer(),
@@ -156,8 +161,8 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
                                   const SizedBox(height: 8),
                                   Text(
                                     bookmark.text,
-                                    style: const TextStyle(
-                                      fontFamily: 'Amiri',
+                                    style: TextStyle(
+                                      fontFamily: settings.quranFont,
                                       fontSize: 16,
                                       height: 1.8,
                                     ),
@@ -197,18 +202,19 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = Theme.of(context).colorScheme.primary;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? (color ?? const Color(0xFFD97706)).withValues(alpha: 0.15)
+              ? (color ?? accent).withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
-                ? (color ?? const Color(0xFFD97706)).withValues(alpha: 0.4)
+                ? (color ?? accent).withValues(alpha: 0.4)
                 : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
           ),
         ),
@@ -224,11 +230,11 @@ class _FilterChip extends StatelessWidget {
               const SizedBox(width: 6),
             ],
             Text(
-              '$label ($count)',
+              '$label (${toArabicNumeral(count)})',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                color: selected ? (color ?? const Color(0xFFD97706)) : null,
+                color: selected ? (color ?? accent) : null,
               ),
             ),
           ],

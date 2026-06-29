@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../home/providers/progress_provider.dart';
 import '../../home/providers/bookmark_provider.dart';
 import '../../home/providers/chapters_provider.dart';
+import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/arabic_utils.dart';
 
 class StatsScreen extends ConsumerWidget {
@@ -18,6 +19,8 @@ class StatsScreen extends ConsumerWidget {
     final stats = progressState.stats;
     final overallProgress = notifier.getOverallProgress();
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +44,7 @@ class StatsScreen extends ConsumerWidget {
                       painter: _ProgressRingPainter(
                         progress: overallProgress,
                         backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        progressColor: const Color(0xFFD97706),
+                        progressColor: accent,
                       ),
                     ),
                   ),
@@ -49,11 +52,11 @@ class StatsScreen extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${(overallProgress * 100).toStringAsFixed(1)}%',
+                        '${toArabicNumeral((overallProgress * 100).round())}%',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.amber[700],
+                          color: accent,
                         ),
                       ),
                       Text(
@@ -159,9 +162,9 @@ class StatsScreen extends ConsumerWidget {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          ch?.nameArabic ?? 'سورة ${progress.chapterId}',
-                                          style: const TextStyle(
-                                            fontFamily: 'Amiri',
+                                          ch?.nameArabic ?? 'سورة ${toArabicNumeral(progress.chapterId)}',
+                                          style: TextStyle(
+                                            fontFamily: settings.quranFont,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -187,18 +190,18 @@ class StatsScreen extends ConsumerWidget {
                                             value: progress.versesRead / progress.totalVerses,
                                             backgroundColor: theme.colorScheme.surfaceContainerHighest,
                                             valueColor: AlwaysStoppedAnimation(
-                                              percent >= 100 ? Colors.green : const Color(0xFFD97706),
+                                              percent >= 100 ? Colors.green : accent,
                                             ),
                                             minHeight: 6,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '$percent%',
+                                          '${toArabicNumeral(percent)}%',
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
-                                            color: percent >= 100 ? Colors.green : Colors.amber[700],
+                                            color: percent >= 100 ? Colors.green : accent,
                                           ),
                                         ),
                                       ],

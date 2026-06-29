@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../home/providers/bookmark_provider.dart';
+import '../../settings/providers/settings_provider.dart';
 import '../../../core/utils/arabic_utils.dart';
 import '../../../core/widgets/empty_state_widget.dart';
 
@@ -14,6 +15,8 @@ class NotesScreen extends ConsumerWidget {
     final notifier = ref.read(bookmarkProvider.notifier);
     final notes = bookmarkState.notes;
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -75,14 +78,14 @@ class NotesScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.note_alt, size: 16, color: Colors.amber[700]),
+                                Icon(Icons.note_alt, size: 16, color: accent),
                                 const SizedBox(width: 6),
                                 Text(
                                   '${note.chapterName} \u2022 ${note.verseKey}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.amber[700],
+                                    color: accent,
                                   ),
                                 ),
                                 const Spacer(),
@@ -98,8 +101,8 @@ class NotesScreen extends ConsumerWidget {
                             const SizedBox(height: 8),
                             Text(
                               note.verseText,
-                              style: const TextStyle(
-                                fontFamily: 'Amiri',
+                              style: TextStyle(
+                                fontFamily: settings.quranFont,
                                 fontSize: 15,
                                 height: 1.8,
                               ),
