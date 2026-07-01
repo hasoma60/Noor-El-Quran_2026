@@ -7,13 +7,18 @@ import '../../home/providers/progress_provider.dart';
 import '../../home/providers/bookmark_provider.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../widgets/verse_card.dart';
+import '../widgets/mushaf_view.dart';
+import '../widgets/surah_header.dart';
+import '../widgets/verse_actions_sheet.dart';
 import '../widgets/tafsir_sheet.dart';
 import '../widgets/note_sheet.dart';
 import '../widgets/share_sheet.dart';
 import '../widgets/audio_player_bar.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/loading_widget.dart';
 import '../../../core/widgets/error_widget.dart';
 import '../../../core/utils/arabic_utils.dart';
+import '../../../domain/entities/chapter.dart';
 import '../../../domain/entities/verse.dart';
 
 class ReaderScreen extends ConsumerStatefulWidget {
@@ -101,7 +106,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final chaptersAsync = ref.watch(chaptersProvider);
     final versesAsync = ref.watch(versesProvider(widget.chapterId));
     final settings = ref.watch(settingsProvider);
-    final theme = Theme.of(context);
 
     final chapter = chaptersAsync.whenOrNull(
       data: (chapters) => chapters.where((c) => c.id == widget.chapterId).firstOrNull,
@@ -116,6 +120,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           style: TextStyle(fontFamily: settings.quranFont, fontSize: 22),
         ),
         actions: [
+          // Reading view mode toggle (verse list <-> continuous Mushaf)
+          IconButton(
+            onPressed: () => ref.read(settingsProvider.notifier).setReadingViewMode(
+                  settings.readingViewMode == viewModeMushaf
+                      ? viewModeFlowing
+                      : viewModeMushaf,
+                ),
+            icon: Icon(
+              settings.readingViewMode == viewModeMushaf
+                  ? Icons.view_agenda_outlined
+                  : Icons.auto_stories_outlined,
+            ),
+            tooltip: settings.readingViewMode == viewModeMushaf
+                ? 'عرض الآيات'
+                : 'عرض المصحف',
+          ),
           // Chapter audio play button
           _ChapterAudioButton(
             chapterId: widget.chapterId,
@@ -135,6 +155,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   );
                 }
 
+                final isMushaf = settings.readingViewMode == viewModeMushaf;
+
                 // Track progress on first load
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ref.read(progressProvider.notifier).updateProgress(
@@ -143,18 +165,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     chapter?.versesCount ?? verses.length,
                   );
 
-                  // Scroll to highlighted verse
-                  if (widget.highlightVerseKey != null) {
+                  // Scroll to highlighted verse (verse-list view only; the
+                  // Mushaf view is a single flowing block without per-verse keys)
+                  if (!isMushaf && widget.highlightVerseKey != null) {
                     Future.delayed(const Duration(milliseconds: 400), () {
                       _scrollToVerse(widget.highlightVerseKey!);
                     });
                   }
                 });
-
-                // Build verse keys map
-                for (final v in verses) {
-                  _verseKeys.putIfAbsent(v.verseKey, () => GlobalKey());
-                }
 
                 return NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
@@ -176,51 +194,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     }
                     return false;
                   },
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: verses.length + 2, // +1 header, +1 footer
-                    itemBuilder: (context, index) {
-                      // Header
-                      if (index == 0) {
-                        return _buildHeader(chapter, settings, theme);
-                      }
-
-                      // Footer padding
-                      if (index == verses.length + 1) {
-                        return const SizedBox(height: 100);
-                      }
-
-                      final verse = verses[index - 1];
-                      final isHighlighted = verse.verseKey == widget.highlightVerseKey;
-                      final isCurrentVerse = audioState.currentVerseKey == verse.verseKey;
-
-                      return VerseCard(
-                        key: _verseKeys[verse.verseKey],
-                        verse: verse,
-                        isHighlighted: isHighlighted,
-                        settings: settings,
-                        onBookmarkToggle: () {
-                          if (chapter == null) return;
-                          final added = ref.read(bookmarkProvider.notifier).toggleBookmark(verse, chapter);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(added ? 'تم حفظ الآية' : 'تم إزالة الإشارة'),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                        isBookmarked: ref.watch(bookmarkProvider).bookmarks.any((b) => b.verseKey == verse.verseKey),
-                        onTafsir: () => _showTafsirSheet(context, verse, chapter?.nameArabic ?? ''),
-                        onShare: () => _showShareSheet(context, verse, chapter?.nameArabic ?? ''),
-                        onNote: () => _showNoteSheet(context, verse, widget.chapterId, chapter?.nameArabic ?? ''),
-                        onPlay: () {
-                          ref.read(audioProvider.notifier).playVerse(widget.chapterId, verse.verseKey);
-                        },
-                        isPlayingAudio: isCurrentVerse && audioState.isPlaying,
-                      );
-                    },
-                  ),
+                  child: isMushaf
+                      ? MushafView(
+                          verses: verses,
+                          chapter: chapter,
+                          chapterId: widget.chapterId,
+                          settings: settings,
+                          controller: _scrollController,
+                          highlightVerseKey: widget.highlightVerseKey,
+                          playingVerseKey: audioState.isPlaying
+                              ? audioState.currentVerseKey
+                              : null,
+                          onVerseTap: (verse) =>
+                              _showVerseActions(context, verse, chapter),
+                        )
+                      : _buildFlowingList(verses, chapter, settings, audioState),
                 );
               },
               loading: () => const LoadingWidget(message: 'جاري تحميل الآيات...'),
@@ -237,53 +225,108 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Widget _buildHeader(dynamic chapter, SettingsState settings, ThemeData theme) {
-    final showBismillah = chapter?.bismillahPre ?? true;
-    // Surah At-Tawbah (9) has no bismillah
-    final isTawbah = widget.chapterId == 9;
+  /// The default verse-by-verse view: one [VerseCard] per verse with its own
+  /// toolbar, optional translation and dividers.
+  Widget _buildFlowingList(
+    List<Verse> verses,
+    Chapter? chapter,
+    SettingsState settings,
+    AudioState audioState,
+  ) {
+    // Build verse keys map for scroll-to-verse navigation
+    for (final v in verses) {
+      _verseKeys.putIfAbsent(v.verseKey, () => GlobalKey());
+    }
 
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        // Chapter name
-        Text(
-          chapter?.nameArabic ?? '',
-          style: TextStyle(
-            fontFamily: settings.quranFont,
-            fontSize: 42,
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${chapter?.revelationPlace == "makkah" ? "مكية" : "مدنية"} \u2022 ${toArabicNumeral(chapter?.versesCount ?? 0)} آية',
-          style: TextStyle(
-            fontSize: 13,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 24),
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      itemCount: verses.length + 2, // +1 header, +1 footer
+      itemBuilder: (context, index) {
+        // Header
+        if (index == 0) {
+          return SurahHeader(
+            chapter: chapter,
+            chapterId: widget.chapterId,
+            settings: settings,
+          );
+        }
 
-        // Bismillah
-        if (showBismillah && !isTawbah) ...[
-          Text(
-            'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ',
-            style: TextStyle(
-              fontFamily: settings.quranFont,
-              fontSize: 28,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+        // Footer padding
+        if (index == verses.length + 1) {
+          return const SizedBox(height: 100);
+        }
+
+        final verse = verses[index - 1];
+        final isHighlighted = verse.verseKey == widget.highlightVerseKey;
+        final isCurrentVerse = audioState.currentVerseKey == verse.verseKey;
+
+        return VerseCard(
+          key: _verseKeys[verse.verseKey],
+          verse: verse,
+          isHighlighted: isHighlighted,
+          settings: settings,
+          onBookmarkToggle: () {
+            if (chapter == null) return;
+            final added = ref.read(bookmarkProvider.notifier).toggleBookmark(verse, chapter);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(added ? 'تم حفظ الآية' : 'تم إزالة الإشارة'),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+          isBookmarked: ref.watch(bookmarkProvider).bookmarks.any((b) => b.verseKey == verse.verseKey),
+          onTafsir: () => _showTafsirSheet(context, verse, chapter?.nameArabic ?? ''),
+          onShare: () => _showShareSheet(context, verse, chapter?.nameArabic ?? ''),
+          onNote: () => _showNoteSheet(context, verse, widget.chapterId, chapter?.nameArabic ?? ''),
+          onPlay: () {
+            ref.read(audioProvider.notifier).playVerse(widget.chapterId, verse.verseKey);
+          },
+          isPlayingAudio: isCurrentVerse && audioState.isPlaying,
+        );
+      },
+    );
+  }
+
+  /// Per-verse actions sheet for the Mushaf view, where verses have no inline
+  /// toolbar. Triggered by tapping a verse in [MushafView].
+  Future<void> _showVerseActions(BuildContext context, Verse verse, Chapter? chapter) {
+    final chapterName = chapter?.nameArabic ?? '';
+    final audioState = ref.read(audioProvider);
+    final isPlaying =
+        audioState.currentVerseKey == verse.verseKey && audioState.isPlaying;
+    final isBookmarked =
+        ref.read(bookmarkProvider).bookmarks.any((b) => b.verseKey == verse.verseKey);
+
+    return showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => VerseActionsSheet(
+        verse: verse,
+        chapterName: chapterName,
+        settings: ref.read(settingsProvider),
+        isBookmarked: isBookmarked,
+        isPlaying: isPlaying,
+        onBookmark: () {
+          if (chapter == null) return;
+          final added = ref.read(bookmarkProvider.notifier).toggleBookmark(verse, chapter);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(added ? 'تم حفظ الآية' : 'تم إزالة الإشارة'),
+              duration: const Duration(seconds: 1),
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-        ],
-
-        Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-        const SizedBox(height: 8),
-      ],
+          );
+        },
+        onTafsir: () => _showTafsirSheet(context, verse, chapterName),
+        onShare: () => _showShareSheet(context, verse, chapterName),
+        onNote: () => _showNoteSheet(context, verse, widget.chapterId, chapterName),
+        onPlay: () =>
+            ref.read(audioProvider.notifier).playVerse(widget.chapterId, verse.verseKey),
+      ),
     );
   }
 }

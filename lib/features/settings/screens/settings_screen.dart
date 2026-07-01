@@ -185,12 +185,35 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Show translation
+          // Reading view mode
+          _SectionTitle(title: 'نمط العرض', theme: theme),
+          const SizedBox(height: 4),
+          Text(
+            'مصحف: نص متصل كصفحة المصحف • آيات: بطاقة لكل آية مع الترجمة',
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<String>(
+            segments: readingViewModeOptions
+                .map((o) => ButtonSegment(value: o.value, label: Text(o.label)))
+                .toList(),
+            selected: {settings.readingViewMode},
+            onSelectionChanged: (v) => notifier.setReadingViewMode(v.first),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Show translation (verse-list view only)
           SwitchListTile(
             title: const Text('عرض الترجمة'),
             subtitle: const Text('إظهار التفسير الميسر أسفل كل آية'),
             value: settings.showTranslation,
-            onChanged: notifier.setShowTranslation,
+            onChanged: settings.readingViewMode == viewModeMushaf
+                ? null
+                : notifier.setShowTranslation,
           ),
 
           const Divider(height: 32),

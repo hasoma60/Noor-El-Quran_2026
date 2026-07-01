@@ -29,6 +29,17 @@ const List<({String family, String label})> quranFontOptions = [
 ];
 const String defaultTheme = 'system';
 
+/// Reading view modes for the reader screen.
+/// `flowing` shows one expandable card per verse (with toolbar + translation),
+/// `mushaf` shows continuous page-style Arabic text like a printed Mushaf.
+const String viewModeFlowing = 'flowing';
+const String viewModeMushaf = 'mushaf';
+
+const List<({String value, String label})> readingViewModeOptions = [
+  (value: viewModeFlowing, label: 'آيات'),
+  (value: viewModeMushaf, label: 'مصحف'),
+];
+
 // Cache TTLs in milliseconds
 const int chapterCacheTtl = 60 * 60 * 1000; // 1 hour
 const int versesCacheTtl = 30 * 60 * 1000; // 30 minutes
