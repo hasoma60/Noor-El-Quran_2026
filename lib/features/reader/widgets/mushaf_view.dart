@@ -121,13 +121,25 @@ class _MushafViewState extends State<MushafView> {
 
       spans.add(
         TextSpan(
-          // U+06DD (end of ayah) renders an ornate medallion enclosing the
-          // verse number in Mushaf-grade fonts (KFGQPC, Amiri, Scheherazade…).
-          text: '${verse.textUthmani} ۝${toArabicNumeral(verse.verseNumber)} ',
+          text: '${verse.textUthmani} ',
           style: baseStyle.copyWith(backgroundColor: background),
           recognizer: _recognizers[verse.verseKey],
         ),
       );
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: GestureDetector(
+            onTap: () => _handleTap(verse),
+            child: _AyahNumberMarker(
+              number: verse.verseNumber,
+              fontSize: settings.fontSize.toDouble(),
+              accent: accent,
+            ),
+          ),
+        ),
+      );
+      spans.add(TextSpan(text: ' ', style: baseStyle));
     }
 
     return SingleChildScrollView(
@@ -158,6 +170,46 @@ class _MushafViewState extends State<MushafView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Circular end-of-ayah marker with the verse number centered inside.
+/// Drawn as a widget so the number always sits inside the circle regardless
+/// of whether the selected Quran font ligates digits into U+06DD.
+class _AyahNumberMarker extends StatelessWidget {
+  final int number;
+  final double fontSize;
+  final Color accent;
+
+  const _AyahNumberMarker({
+    required this.number,
+    required this.fontSize,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = fontSize * 1.45;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: accent.withValues(alpha: 0.75), width: 1.4),
+        color: accent.withValues(alpha: 0.08),
+      ),
+      child: Text(
+        toArabicNumeral(number),
+        textDirection: TextDirection.rtl,
+        style: TextStyle(
+          fontSize: number >= 100 ? fontSize * 0.42 : fontSize * 0.52,
+          height: 1.0,
+          fontWeight: FontWeight.w600,
+          color: accent,
+        ),
       ),
     );
   }
